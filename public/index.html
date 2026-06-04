@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vexx AI Debate Arena</title>
+  
+  <!-- Modern Typography (Outfit and JetBrains Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Tabler Icons Outline CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-system">
+  <h2 class="sr-only">Interface principal para debate entre multiplas inteligências artificiais com busca web e download de arquivos.</h2>
+
+  <div class="app-layout">
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="app-sidebar" role="navigation" aria-label="Menu principal">
+      <div class="sidebar-header">
+        <button class="toggle-sidebar-btn" onclick="toggleSidebar()" aria-label="Recolher/Expandir menu" title="Recolher/Expandir menu">
+          <i class="ti ti-chevron-left"></i>
+        </button>
+        <div class="sidebar-logo">
+          <i class="ti ti-layout-dashboard" aria-hidden="true"></i>
+          <span>Vexx AI Arena</span>
+        </div>
+
+        <!-- Segmented Tab Controls (like Chat / Cowork / Code) -->
+        <div class="sidebar-segmented-tabs">
+          <button class="segment-btn active" id="nav-arena" onclick="switchTab('arena')" title="Debate Arena">
+            <i class="ti ti-message-2"></i>
+            <span>Chat</span>
+          </button>
+          <button class="segment-btn" id="nav-settings" onclick="switchTab('settings')" title="Configurações API">
+            <i class="ti ti-settings"></i>
+            <span>Ajustes</span>
+          </button>
+          <button class="segment-btn" id="nav-history" onclick="switchTab('history')" title="Histórico de Arquivos">
+            <i class="ti ti-folder"></i>
+            <span>Arquivos</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sleek row of Provider status lights -->
+      <div class="sidebar-status-row">
+        <div class="status-dot" id="status-gemini" title="Google Gemini"><span class="status-indicator">OFF</span><span>GE</span></div>
+        <div class="status-dot" id="status-groq" title="Groq Cloud"><span class="status-indicator">OFF</span><span>GR</span></div>
+        <div class="status-dot" id="status-openrouter" title="OpenRouter"><span class="status-indicator">OFF</span><span>OR</span></div>
+        <div class="status-dot" id="status-openai" title="OpenAI"><span class="status-indicator">OFF</span><span>OA</span></div>
+        <div class="status-dot" id="status-huggingface" title="Hugging Face 1"><span class="status-indicator">OFF</span><span>HF</span></div>
+        <div class="status-dot" id="status-huggingface2" title="Hugging Face 2"><span class="status-indicator">OFF</span><span>H2</span></div>
+      </div>
+
+      <!-- Action button for initiating a New Debate Arena -->
+      <button class="new-chat-sidebar-btn" onclick="clearChat()" title="Iniciar Nova Arena">
+        <i class="ti ti-plus" aria-hidden="true"></i>
+        <span>Nova Arena</span>
+      </button>
+
+      <!-- AI Long Term Memory Panel (styled as Recents) -->
+      <div class="sidebar-memory-panel">
+        <div class="sidebar-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>Memórias Recentes</span>
+          <button onclick="clearAllMemories()" style="background: transparent; border: none; color: var(--color-text-danger); cursor: pointer; font-size: 10px; display: inline-flex; align-items: center; gap: 2px;" title="Limpar memórias">
+            <i class="ti ti-trash"></i> Limpar
+          </button>
+        </div>
+        <div id="sidebar-memories-list" class="sidebar-memories-list">
+          <div style="font-size: 10px; color: var(--color-text-tertiary); text-align: center; padding: 4px;">Nenhuma memória gravada ainda.</div>
+        </div>
+      </div>
+      
+      <!-- Bottom section with App Status & User Profile -->
+      <div class="sidebar-footer">
+        <div class="sidebar-user-profile">
+          <div class="avatar-circle warning-bg">EF</div>
+          <div class="user-details">
+            <span class="user-name">Você</span>
+          </div>
+          <button class="theme-toggle-icon" onclick="toggleTheme()" aria-label="Alternar tema claro/escuro" title="Alternar tema claro/escuro">
+            <i class="ti ti-moon" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN APP CONTENT PANELS -->
+    <main class="app-main-content">
+      
+      <!-- TAB 1: DEBATE ARENA -->
+      <section id="tab-content-arena" class="tab-panel active">
+        <div class="panel-header">
+          <div>
+            <h1>Debate Arena</h1>
+            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Coloque múltiplos modelos de IA para conversar, debater e criar juntos.</p>
+          </div>
+          <div class="header-actions">
+            <button class="action-btn" onclick="clearChat()" aria-label="Limpar histórico do chat">
+              <i class="ti ti-trash" aria-hidden="true"></i>
+              <span>Limpar Arena</span>
+            </button>
+          </div>
+        </div>
+
+
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+          <!-- Chat Feed -->
+          <div class="chat-feed" id="chat-feed">
+            <!-- Welcome Info Card (Vexx styled Card) -->
+            <div class="welcome-card card">
+              <h2>Bem-vindo à Vexx AI Debate Arena</h2>
+              <p>Configure suas chaves de API para iniciar discussões humanas e colaborativas entre diferentes Inteligências Artificiais em tempo real.</p>
+              
+              <div style="margin-top: 16px;">
+                <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-secondary); margin-bottom: 8px;">O que você pode fazer:</h3>
+                <table class="features-table">
+                  <tbody>
+                    <tr>
+                      <td style="width: 30px;"><i class="ti ti-users" style="color: var(--color-text-info);"></i></td>
+                      <td><strong>Discussão Humana:</strong> As IAs debatem entre si respondendo aos argumentos das outras.</td>
+                    </tr>
+                    <tr>
+                      <td><i class="ti ti-search" style="color: var(--color-text-success);"></i></td>
+                      <td><strong>Busca Web:</strong> Elas pesquisam na internet em tempo real para obter informações atualizadas.</td>
+                    </tr>
+                    <tr>
+                      <td><i class="ti ti-download" style="color: var(--color-text-warning);"></i></td>
+                      <td><strong>Criação de Arquivos:</strong> Peça scripts ou códigos e baixe-os com um clique.</td>
+                    </tr>
+                    <tr>
+                      <td><i class="ti ti-star" style="color: var(--color-text-danger);"></i></td>
+                      <td><strong>Imagens Integradas:</strong> Peça fotos ou desenhos e elas geram e baixam no chat.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="warning-alert" id="no-keys-warning">
+                <i class="ti ti-lock" aria-hidden="true"></i>
+                <div>Nenhuma chave de API configurada. Por favor, acesse a aba <a href="#" onclick="switchTab('settings')" style="color: var(--color-text-warning); font-weight: 500;">Configurações API</a> para configurar as chaves.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thinking / Streaming status indicator -->
+          <div class="typing-indicator-container" id="typing-indicator" style="display: none;">
+            <div class="avatar-circle" id="typing-avatar">AI</div>
+            <div class="typing-bubble">
+              <span class="typing-model-name" id="typing-model-name">Modelo</span> está digitando
+              <div class="dots-loader">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Input Control Panel (Refactored to match screenshot exactly) -->
+          <div class="chat-input-wrapper">
+            <!-- Parameter controls in a sleek header bar above input -->
+            <div class="input-params-bar">
+              <div class="param-item">
+                <input type="checkbox" id="param-search" checked>
+                <label for="param-search" title="Permite que as IAs usem o DuckDuckGo para buscar conteúdo online atualizado.">
+                  <i class="ti ti-search" aria-hidden="true"></i> Busca na Web
+                </label>
+              </div>
+
+              <div class="param-item">
+                <input type="checkbox" id="param-debate" checked onchange="toggleDebateTurns(this.checked)">
+                <label for="param-debate" title="Se ativo, os modelos comentam as respostas uns dos outros em rodadas.">
+                  <i class="ti ti-message-circle" aria-hidden="true"></i> Modo Debate
+                </label>
+              </div>
+
+              <div class="param-item" id="debate-turns-container">
+                <label for="param-turns">Rodadas:</label>
+                <select id="param-turns" style="height: 20px; padding: 0 4px; font-size: 10px;">
+                  <option value="1">1 Turno (Apenas líder)</option>
+                  <option value="2" selected>2 Turnos (Rápido)</option>
+                  <option value="3">3 Turnos (Médio)</option>
+                  <option value="4">4 Turnos (Longo)</option>
+                  <option value="5">5 Turnos (Completo)</option>
+                  <option value="6">6 Turnos</option>
+                  <option value="8">8 Turnos</option>
+                  <option value="10">10 Turnos (Máximo)</option>
+                </select>
+              </div>
+              
+              <div class="param-item-separator"></div>
+
+              <div class="param-item">
+                <label for="param-primary">Líder:</label>
+                <select id="param-primary" style="height: 20px; padding: 0 4px; font-size: 10px;" onchange="updateActiveModelDisplay()">
+                  <option value="gemini" selected>Gael (Gemini)</option>
+                  <option value="groq">Gregório (Groq)</option>
+                  <option value="openrouter">Orlando (OpenRouter)</option>
+                  <option value="openai">Olavo (OpenAI)</option>
+                  <option value="huggingface">Hugo (Hugging Face 1)</option>
+                  <option value="huggingface2">Heitor (Hugging Face 2)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- File Attachments Preview Panel -->
+            <div class="attachments-preview" id="attachments-preview" style="display: none;"></div>
+
+            <!-- Centered input box -->
+            <div class="chat-input-area">
+              <button class="input-action-btn" id="attach-btn" onclick="triggerFileInput()" aria-label="Anexar arquivos ou imagens" title="Anexar arquivos">
+                <i class="ti ti-plus" aria-hidden="true"></i>
+              </button>
+              <input type="file" id="file-input" multiple style="display: none;" onchange="handleFileSelect(event)">
+
+              <textarea id="chat-message-input" placeholder="Escreva uma mensagem..." rows="1" oninput="adjustTextareaHeight(this)"></textarea>
+              
+              <div class="input-right-controls">
+                <span class="active-model-badge" id="active-model-name-display">Gemini 2.5 Flash</span>
+                <button class="input-action-btn" onclick="toggleSpeechRecognition()" aria-label="Usar microfone" title="Usar microfone"><i class="ti ti-microphone"></i></button>
+                <button class="input-action-btn" onclick="speakLastMessage()" aria-label="Ouvir" title="Ouvir"><i class="ti ti-volume"></i></button>
+                <button class="send-btn" id="send-btn" onclick="startDebate()" aria-label="Enviar mensagem" title="Enviar mensagem">
+                  <i class="ti ti-arrow-up" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="chat-disclaimer">
+              Vexx Arena é uma IA e pode cometer erros. Por favor, verifique as respostas importantes.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: API CONFIGURATION -->
+      <section id="tab-content-settings" class="tab-panel">
+        <div class="panel-header">
+          <div>
+            <h1>Configurações das APIs</h1>
+            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Insira suas chaves de API locais. Elas são salvas apenas no seu navegador.</p>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          
+          <!-- Key Card: Google AI Studio (Gemini) -->
+          <div class="card key-config-card">
+            <div class="key-card-header">
+              <div class="provider-title">
+                <span class="avatar-circle info-bg"><i class="ti ti-star"></i></span>
+                <div>
+                  <h3>Google AI Studio (Gemini)</h3>
+                  <span class="meta-text">Recomendado - Generosa cota grátis</span>
+                </div>
+              </div>
+              <span class="badge-neutral" id="badge-gemini">Não configurado</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="key-gemini">Chave de API (API Key)</label>
+              <div class="input-password-wrapper">
+                <input type="password" id="key-gemini" placeholder="AIzaSy..." oninput="saveKeys()">
+                <button class="toggle-password" onclick="togglePasswordVisibility('key-gemini')">
+                  <i class="ti ti-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="model-gemini">Modelo Ativo</label>
+              <select id="model-gemini-select" onchange="handleModelSelectChange('gemini')">
+                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Padrão)</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                <option value="custom">Outro (Personalizado)...</option>
+              </select>
+              <input type="text" id="model-gemini" value="gemini-2.5-flash" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+              <span class="meta-text">Gratuito: <code>gemini-2.5-flash</code> ou <code>gemini-1.5-flash</code>.</span>
+            </div>
+          </div>
+
+          <!-- Key Card: Groq -->
+          <div class="card key-config-card">
+            <div class="key-card-header">
+              <div class="provider-title">
+                <span class="avatar-circle success-bg"><i class="ti ti-mouse"></i></span>
+                <div>
+                  <h3>Groq Cloud</h3>
+                  <span class="meta-text">Extremamente rápido - Plano Grátis com limites</span>
+                </div>
+              </div>
+              <span class="badge-neutral" id="badge-groq">Não configurado</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="key-groq">Chave de API (API Key)</label>
+              <div class="input-password-wrapper">
+                <input type="password" id="key-groq" placeholder="gsk_..." oninput="saveKeys()">
+                <button class="toggle-password" onclick="togglePasswordVisibility('key-groq')">
+                  <i class="ti ti-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="model-groq">Modelo Ativo</label>
+              <select id="model-groq-select" onchange="handleModelSelectChange('groq')">
+                <option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B Versatile (Padrão)</option>
+                <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+                <option value="mixtral-8x7b-32768">Mixtral 8x7b</option>
+                <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill Llama 70B</option>
+                <option value="custom">Outro (Personalizado)...</option>
+              </select>
+              <input type="text" id="model-groq" value="llama-3.3-70b-versatile" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+              <span class="meta-text">Gratuito: <code>llama-3.3-70b-versatile</code> ou <code>llama-3.1-8b-instant</code>.</span>
+            </div>
+          </div>
+
+          <!-- Key Card: OpenRouter -->
+          <div class="card key-config-card">
+            <div class="key-card-header">
+              <div class="provider-title">
+                <span class="avatar-circle neutral-bg"><i class="ti ti-users"></i></span>
+                <div>
+                  <h3>OpenRouter</h3>
+                  <span class="meta-text">Acesso a diversos modelos gratuitos</span>
+                </div>
+              </div>
+              <span class="badge-neutral" id="badge-openrouter">Não configurado</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="key-openrouter">Chave de API (API Key)</label>
+              <div class="input-password-wrapper">
+                <input type="password" id="key-openrouter" placeholder="sk-or-v1-..." oninput="saveKeys()">
+                <button class="toggle-password" onclick="togglePasswordVisibility('key-openrouter')">
+                  <i class="ti ti-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="model-openrouter">Modelo Ativo</label>
+              <select id="model-openrouter-select" onchange="handleModelSelectChange('openrouter')">
+                <option value="openrouter/free" selected>Free Models Router (Auto-seleção)</option>
+                <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B Instruct (Grátis)</option>
+                <option value="google/gemma-4-31b-it:free">Gemma 4 31B (Grátis)</option>
+                <option value="z-ai/glm-4.5-air:free">GLM 4.5 Air (Grátis)</option>
+                <option value="qwen/qwen3-coder:free">Qwen 3 Coder (Grátis)</option>
+                <option value="custom">Outro (Personalizado)...</option>
+              </select>
+              <input type="text" id="model-openrouter" value="openrouter/free" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+              <span class="meta-text">Use <code>openrouter/free</code> ou modelos terminando em <code>:free</code> (ex: <code>meta-llama/llama-3.3-70b-instruct:free</code>).</span>
+            </div>
+          </div>
+
+          <!-- Key Card: OpenAI -->
+          <div class="card key-config-card">
+            <div class="key-card-header">
+              <div class="provider-title">
+                <span class="avatar-circle warning-bg"><i class="ti ti-keyboard"></i></span>
+                <div>
+                  <h3>OpenAI API</h3>
+                  <span class="meta-text">Requer saldo pré-pago ou créditos promocionais</span>
+                </div>
+              </div>
+              <span class="badge-neutral" id="badge-openai">Não configurado</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="key-openai">Chave de API (API Key)</label>
+              <div class="input-password-wrapper">
+                <input type="password" id="key-openai" placeholder="sk-proj-..." oninput="saveKeys()">
+                <button class="toggle-password" onclick="togglePasswordVisibility('key-openai')">
+                  <i class="ti ti-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="model-openai">Modelo Ativo</label>
+              <select id="model-openai-select" onchange="handleModelSelectChange('openai')">
+                <option value="gpt-4o-mini" selected>GPT-4o Mini (Padrão)</option>
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="o1-mini">o1-mini</option>
+                <option value="custom">Outro (Personalizado)...</option>
+              </select>
+              <input type="text" id="model-openai" value="gpt-4o-mini" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+              <span class="meta-text">Leve e barato: <code>gpt-4o-mini</code>.</span>
+            </div>
+          </div>
+
+          <!-- Key Card: Hugging Face 1 -->
+          <div class="card key-config-card">
+            <div class="key-card-header">
+              <div class="provider-title">
+                <span class="avatar-circle purple-bg"><i class="ti ti-cpu"></i></span>
+                <div>
+                  <h3>Hugo (Hugging Face 1)</h3>
+                  <span class="meta-text">Opção Grátis — Token Serverless API</span>
+                </div>
+              </div>
+              <span class="badge-neutral" id="badge-huggingface">Não configurado</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="key-huggingface">Token de Acesso (Access Token)</label>
+              <div class="input-password-wrapper">
+                <input type="password" id="key-huggingface" placeholder="hf_..." oninput="saveKeys()">
+                <button class="toggle-password" onclick="togglePasswordVisibility('key-huggingface')">
+                  <i class="ti ti-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="model-huggingface">Modelo Ativo</label>
+              <select id="model-huggingface-select" onchange="handleModelSelectChange('huggingface')">
+                <option value="Qwen/Qwen2.5-72B-Instruct" selected>Qwen 2.5 72B Instruct (Recomendado)</option>
+                <option value="meta-llama/Llama-3.3-70B-Instruct">Llama 3.3 70B Instruct (Poderoso)</option>
+                <option value="mistralai/Mistral-7B-Instruct-v0.3">Mistral 7B Instruct (Rápido)</option>
+                <option value="microsoft/Phi-3-mini-4k-instruct">Phi-3 Mini (Leve)</option>
+                <option value="custom">Outro (Personalizado)...</option>
+              </select>
+              <input type="text" id="model-huggingface" value="Qwen/Qwen2.5-72B-Instruct" placeholder="ex: Qwen/Qwen2.5-Coder-32B-Instruct" oninput="saveKeys()" style="margin-top: 8px; display: none;">
+              <span class="meta-text">Gratuito: model_id do Hugging Hub (ex: <code>Qwen/Qwen2.5-72B-Instruct</code>).</span>
+            </div>
+          </div>
+
+          <!-- Key Card: Hugging Face 2 -->
+          <div class="card key-config-card">
+            <div class="key-card-header">
+              <div class="provider-title">
+                <span class="avatar-circle purple-bg"><i class="ti ti-cpu"></i></span>
+                <div>
+                  <h3>Heitor (Hugging Face 2)</h3>
+                  <span class="meta-text">Oponente — Se vazio, usa o token do HF 1</span>
+                </div>
+              </div>
+              <span class="badge-neutral" id="badge-huggingface2">Não configurado</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="key-huggingface2">Token de Acesso (Access Token)</label>
+              <div class="input-password-wrapper">
+                <input type="password" id="key-huggingface2" placeholder="Opcional (Usa chave do HF 1)" oninput="saveKeys()">
+                <button class="toggle-password" onclick="togglePasswordVisibility('key-huggingface2')">
+                  <i class="ti ti-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="model-huggingface2">Modelo Ativo</label>
+              <select id="model-huggingface2-select" onchange="handleModelSelectChange('huggingface2')">
+                <option value="meta-llama/Llama-3.3-70B-Instruct" selected>Llama 3.3 70B Instruct (Padrão)</option>
+                <option value="Qwen/Qwen2.5-72B-Instruct">Qwen 2.5 72B Instruct</option>
+                <option value="mistralai/Mistral-7B-Instruct-v0.3">Mistral 7B Instruct</option>
+                <option value="microsoft/Phi-3-mini-4k-instruct">Phi-3 Mini</option>
+                <option value="custom">Outro (Personalizado)...</option>
+              </select>
+              <input type="text" id="model-huggingface2" value="meta-llama/Llama-3.3-70B-Instruct" placeholder="ex: Qwen/Qwen2.5-Coder-32B-Instruct" oninput="saveKeys()" style="margin-top: 8px; display: none;">
+              <span class="meta-text">Gratuito: model_id do Hugging Hub (ex: <code>meta-llama/Llama-3.3-70B-Instruct</code>).</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Global Parameters (Temperature, instructions etc) -->
+        <div class="card global-params-card" style="margin-top: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h2 style="font-size: 16px; margin: 0; font-weight: 500;">Parâmetros Globais do Debate</h2>
+            <span id="save-status" class="badge-success" style="font-size: 10px; display: none; padding: 2px 8px;"><i class="ti ti-circle-check" aria-hidden="true"></i> Salvo Localmente</span>
+          </div>
+          <div class="params-row-grid">
+            <div class="form-group">
+              <label for="param-temperature">Temperatura (Criatividade): <span id="temp-val">0.7</span></label>
+              <input type="range" id="param-temperature" min="0" max="1.5" step="0.1" value="0.7" oninput="document.getElementById('temp-val').textContent = this.value; saveKeys()">
+            </div>
+            
+            <div class="form-group">
+              <label for="param-max-tokens">Tamanho da Resposta (Max Tokens)</label>
+              <select id="param-max-tokens" onchange="saveKeys()">
+                <option value="1024">1024 (Mais conciso)</option>
+                <option value="2048" selected>2048 (Padrão)</option>
+                <option value="4096">4096 (Muito longo)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 12px;">
+            <label for="param-system-prompt">Instruções de Debate (System Instruction)</label>
+            <textarea id="param-system-prompt" style="height: 100px;" oninput="saveKeys()">Você é uma IA de elite com múltiplos talentos em debate, assistência e desenvolvimento. Habilidades Essenciais:
+1. Conversa & Diálogo Natural: Participe de forma engajadora, analise e comente sobre o ponto de vista dos outros debatedores e evite jargões mecânicos.
+2. Programação, Códigos & Debugging: Crie códigos/scripts extremamente limpos, funcionais, seguros e comentados. Ao ver bugs ou solicitar correções, explique a falha lógica de forma analítica e apresente a solução corrigida pronta para uso.
+3. Engenharia de Prompts: Ajude o usuário a refinar suas ideias transformando instruções vagas em prompts de alta qualidade estruturados.
+4. Comédia, Wit & Humor: Seja espirituoso, adicione sacadas inteligentes e toques de humor leve/sarcasmo elegante quando apropriado para tornar a interação divertida.
+5. Busca Web Avançada: Sempre que dados de pesquisa web forem fornecidos sob [CONTEXTO DE BUSCA WEB REALIZADA], trate-os como verdades absolutas de tempo real, cite as fontes diretamente e integre as informações de forma orgânica.
+Seja direto, dinâmico e adapte sua persona à necessidade da pergunta.</textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: FILE AND IMAGE HISTORY -->
+      <section id="tab-content-history" class="tab-panel">
+        <div class="panel-header">
+          <div>
+            <h1>Histórico de Arquivos e Imagens</h1>
+            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Todos os arquivos de código e imagens gerados durante a sessão atual para download rápido.</p>
+          </div>
+        </div>
+
+        <!-- Artifact list (Tables and metrics) -->
+        <div class="card history-container">
+          <div class="history-tabs">
+            <button class="history-tab-btn active" id="history-tab-files" onclick="switchHistoryTab('files')">Arquivos de Código</button>
+            <button class="history-tab-btn" id="history-tab-images" onclick="switchHistoryTab('images')">Imagens Geradas</button>
+          </div>
+
+          <!-- Section: Files Table -->
+          <div class="history-section active" id="history-section-files">
+            <table class="artifacts-table" id="files-table">
+              <thead>
+                <tr>
+                  <th style="width: 40%">Nome do Arquivo</th>
+                  <th style="width: 20%">Extensão</th>
+                  <th style="width: 25%">Gerado Por</th>
+                  <th style="width: 15%; text-align: right;">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="files-table-body">
+                <tr>
+                  <td colspan="4" class="empty-table-row">Nenhum arquivo gerado nesta sessão ainda.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Section: Images Gallery -->
+          <div class="history-section" id="history-section-images">
+            <div class="gallery-grid" id="images-gallery">
+              <div class="empty-gallery">Nenhuma imagem gerada nesta sessão ainda.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
