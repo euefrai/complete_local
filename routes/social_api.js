@@ -152,9 +152,10 @@ router.post('/api/instagram/send-message', verifyToken, async (req, res) => {
 
 // 10. Get Instagram API Status
 router.get('/api/instagram/status', verifyToken, async (req, res) => {
+  const activeId = await instagramGraph.getActiveId();
   res.json({
     isSimulated: instagramGraph.isSimulated,
-    businessAccountId: instagramGraph.businessAccountId,
+    businessAccountId: activeId,
     hasConnectionError: instagramGraph.hasConnectionError || false,
     lastError: instagramGraph.lastError || null
   });
