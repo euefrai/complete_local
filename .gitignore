@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
-package-lock.json
+dist/
+build/
+tmp/
 
 # Environment variables
 .env
@@ -13,5 +15,3 @@ logs/
 # Scratch and temporary files
 scratch/
 .gemini/
-dist/
-tmp/
