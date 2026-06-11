@@ -122,35 +122,91 @@ async function loadInstagramData() {
 
   const headers = { "Authorization": `Bearer ${jwtToken}` };
 
+  // 0. Update Instagram API Status Badge
+  let hasConnError = false;
+  let connErrorMsg = "";
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/instagram/status`, { headers });
+    if (r.ok) {
+      const statusData = await r.json();
+      hasConnError = statusData.hasConnectionError;
+      connErrorMsg = statusData.lastError || "";
+      const badge = document.getElementById("instagram-mode-badge");
+      if (badge) {
+        if (hasConnError) {
+          badge.textContent = "Erro de Conexão";
+          badge.style.background = "rgba(239, 68, 68, 0.15)";
+          badge.style.color = "#ef4444";
+          badge.title = `Erro: ${connErrorMsg}`;
+        } else if (statusData.isSimulated) {
+          badge.textContent = "Simulado";
+          badge.style.background = "rgba(167, 139, 250, 0.15)";
+          badge.style.color = "var(--color-accent-amethyst)";
+          badge.title = "Usando banco de dados mock local";
+        } else {
+          badge.textContent = "Oficial";
+          badge.style.background = "rgba(34, 197, 94, 0.15)";
+          badge.style.color = "#22c55e";
+          badge.title = `Conectado ao ID: ${statusData.businessAccountId}`;
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Load API status failed:", e);
+  }
+
   // 1. Load Profile
   try {
     const r = await fetch(`${BACKEND_URL}/api/instagram/profile`, { headers });
+    const picEl = document.getElementById("ig-profile-pic");
+    const nameEl = document.getElementById("ig-profile-name");
+    const handleEl = document.getElementById("ig-profile-handle");
+    const followersEl = document.getElementById("ig-followers");
+    
     if (r.ok) {
       const p = await r.json();
-      const picEl = document.getElementById("ig-profile-pic");
-      const nameEl = document.getElementById("ig-profile-name");
-      const handleEl = document.getElementById("ig-profile-handle");
-      const followersEl = document.getElementById("ig-followers");
-      
-      if (picEl && p.profile_picture_url) picEl.src = p.profile_picture_url;
-      if (nameEl) nameEl.textContent = p.name || p.username;
-      if (handleEl) handleEl.textContent = `@${p.username}`;
-      if (followersEl) followersEl.textContent = p.followers_count.toLocaleString();
+      if (picEl) picEl.src = p.profile_picture_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200";
+      if (nameEl) nameEl.textContent = p.name || p.username || "Sem Nome";
+      if (handleEl) handleEl.textContent = p.username ? `@${p.username}` : "@sem_username";
+      if (followersEl) followersEl.textContent = (p.followers_count || 0).toLocaleString();
+
+      if (p.error) {
+        showToast(`Conexão Oficial falhou. Exibindo dados simulados.`, "warning");
+        const badge = document.getElementById("instagram-mode-badge");
+        if (badge) {
+          badge.textContent = "Erro de Conexão";
+          badge.style.background = "rgba(239, 68, 68, 0.15)";
+          badge.style.color = "#ef4444";
+          badge.title = `Erro: ${p.error}`;
+        }
+      }
+    } else {
+      const data = await r.json().catch(() => ({}));
+      showToast(`Erro ao buscar perfil: ${data.error || r.statusText}`, "danger");
+      if (nameEl) nameEl.textContent = "Erro na API";
+      if (handleEl) handleEl.textContent = "@erro";
+      if (followersEl) followersEl.textContent = "0";
     }
   } catch (e) {
     console.error("Load profile failed:", e);
+    showToast("Erro ao carregar dados do perfil.", "danger");
+    const nameEl = document.getElementById("ig-profile-name");
+    if (nameEl) nameEl.textContent = "Erro de Conexão";
   }
 
   // 2. Load Insights
   try {
     const r = await fetch(`${BACKEND_URL}/api/instagram/insights`, { headers });
+    const reachEl = document.getElementById("ig-reach");
+    const engagementEl = document.getElementById("ig-engagement");
+
     if (r.ok) {
       const data = await r.json();
-      const reachEl = document.getElementById("ig-reach");
-      const engagementEl = document.getElementById("ig-engagement");
-
-      if (reachEl) reachEl.textContent = data.monthlyReach.toLocaleString();
-      if (engagementEl) engagementEl.textContent = `${data.engagementRate}%`;
+      if (reachEl) reachEl.textContent = (data.monthlyReach || 0).toLocaleString();
+      if (engagementEl) engagementEl.textContent = `${data.engagementRate || 0}%`;
+    } else {
+      if (reachEl) reachEl.textContent = "0";
+      if (engagementEl) engagementEl.textContent = "0%";
     }
   } catch (e) {
     console.error("Load insights failed:", e);

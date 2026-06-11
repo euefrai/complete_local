@@ -5,31 +5,68 @@ const { verifyToken } = require('../lib/auth');
 
 // 1. Get Instagram Profile
 router.get('/api/instagram/profile', verifyToken, async (req, res) => {
+  const forceSimulated = req.query.mock === 'true';
   try {
-    const profile = await instagramGraph.getProfile();
-    res.json(profile);
+    const profile = await instagramGraph.getProfile(forceSimulated);
+    res.json({
+      ...profile,
+      isSimulated: instagramGraph.isSimulated || forceSimulated,
+      error: null
+    });
   } catch (e) {
-    res.status(500).json({ error: 'Falha ao buscar perfil do Instagram', details: e.message });
+    console.error('[Profile API error, falling back to simulated]', e.message);
+    try {
+      const profile = await instagramGraph.getProfile(true);
+      res.json({
+        ...profile,
+        isSimulated: true,
+        error: e.message
+      });
+    } catch (fallbackError) {
+      res.status(500).json({ error: 'Falha ao buscar perfil do Instagram', details: e.message });
+    }
   }
 });
 
 // 2. Get Recent Media List
 router.get('/api/instagram/media', verifyToken, async (req, res) => {
+  const forceSimulated = req.query.mock === 'true';
   try {
-    const media = await instagramGraph.getMedia();
+    const media = await instagramGraph.getMedia(forceSimulated);
     res.json(media);
   } catch (e) {
-    res.status(500).json({ error: 'Falha ao buscar publicações', details: e.message });
+    console.error('[Media API error, falling back to simulated]', e.message);
+    try {
+      const media = await instagramGraph.getMedia(true);
+      res.json(media);
+    } catch (fallbackError) {
+      res.status(500).json({ error: 'Falha ao buscar publicações', details: e.message });
+    }
   }
 });
 
 // 3. Get Aggregated Insights
 router.get('/api/instagram/insights', verifyToken, async (req, res) => {
+  const forceSimulated = req.query.mock === 'true';
   try {
-    const insights = await instagramGraph.getInsights();
-    res.json(insights);
+    const insights = await instagramGraph.getInsights(forceSimulated);
+    res.json({
+      ...insights,
+      isSimulated: instagramGraph.isSimulated || forceSimulated,
+      error: null
+    });
   } catch (e) {
-    res.status(500).json({ error: 'Falha ao buscar métricas de insights', details: e.message });
+    console.error('[Insights API error, falling back to simulated]', e.message);
+    try {
+      const insights = await instagramGraph.getInsights(true);
+      res.json({
+        ...insights,
+        isSimulated: true,
+        error: e.message
+      });
+    } catch (fallbackError) {
+      res.status(500).json({ error: 'Falha ao buscar métricas de insights', details: e.message });
+    }
   }
 });
 
@@ -111,6 +148,16 @@ router.post('/api/instagram/send-message', verifyToken, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Falha ao enviar DM', details: e.message });
   }
+});
+
+// 10. Get Instagram API Status
+router.get('/api/instagram/status', verifyToken, async (req, res) => {
+  res.json({
+    isSimulated: instagramGraph.isSimulated,
+    businessAccountId: instagramGraph.businessAccountId,
+    hasConnectionError: instagramGraph.hasConnectionError || false,
+    lastError: instagramGraph.lastError || null
+  });
 });
 
 module.exports = router;
