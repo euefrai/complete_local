@@ -1,0 +1,205 @@
+<section id="tab-content-dashboard" class="tab-panel active">
+  <div class="panel-header">
+    <div>
+      <h1>Painel Executivo — wifa jl</h1>
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Sistema Operacional Cognitivo Local. Monitore o hardware, gerencie o grafo de conhecimento e planeje tarefas autônomas.</p>
+    </div>
+    <div class="header-actions">
+      <button class="action-btn" onclick="openCommandPalette()" title="Buscar Comandos (Ctrl+P)">
+        <i class="ti ti-search"></i>
+        <span>Command Palette</span>
+      </button>
+      <button class="action-btn" onclick="refreshDashboard()" title="Atualizar Painel">
+        <i class="ti ti-refresh"></i>
+        <span>Atualizar</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="dashboard-grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; padding: 1.25rem; overflow-y: auto; height: calc(100% - 60px);">
+    
+    <!-- CARD 1: HARDWARE & PROCESS STATUS -->
+    <div class="card hardware-card" style="display: flex; flex-direction: column; gap: 12px; min-height: 250px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
+          <i class="ti ti-cpu" style="color: var(--color-text-info);"></i> Recursos do Computador
+        </h3>
+        <span class="badge-neutral" id="hw-platform" style="font-size: 10px;">Windows</span>
+      </div>
+
+      <div class="gauges-row" style="display: flex; justify-content: space-around; gap: 12px; margin: 10px 0;">
+        <!-- CPU Progress Circle -->
+        <div style="text-align: center;">
+          <div class="usage-circle-container" style="width: 64px; height: 64px; position: relative;" title="Uso de Processador">
+            <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+              <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--bg-surface-alt)" stroke-width="3.5"></circle>
+              <circle id="cpu-gauge" cx="18" cy="18" r="15.915" fill="none" stroke="var(--color-text-info)" stroke-width="3.5" stroke-dasharray="100" stroke-dashoffset="100" style="transition: stroke-dashoffset 0.5s ease;"></circle>
+            </svg>
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; font-family: var(--font-mono);" id="cpu-text">0%</div>
+          </div>
+          <span style="font-size: 11px; color: var(--text-secondary); display: block; margin-top: 4px;">CPU</span>
+        </div>
+
+        <!-- RAM Progress Circle -->
+        <div style="text-align: center;">
+          <div class="usage-circle-container" style="width: 64px; height: 64px; position: relative;" title="Uso de Memória RAM">
+            <svg viewBox="0 0 36 36" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+              <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--bg-surface-alt)" stroke-width="3.5"></circle>
+              <circle id="ram-gauge" cx="18" cy="18" r="15.915" fill="none" stroke="var(--color-text-warning)" stroke-width="3.5" stroke-dasharray="100" stroke-dashoffset="100" style="transition: stroke-dashoffset 0.5s ease;"></circle>
+            </svg>
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; font-family: var(--font-mono);" id="ram-text">0%</div>
+          </div>
+          <span style="font-size: 11px; color: var(--text-secondary); display: block; margin-top: 4px;">RAM</span>
+        </div>
+      </div>
+
+      <!-- Extended Info -->
+      <div style="font-size: 11px; display: flex; flex-direction: column; gap: 4px; background: var(--bg-surface-alt); padding: 8px; border-radius: var(--radius-sm);">
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-tertiary);">Processador:</span>
+          <strong id="hw-cpu-model" style="text-align: right; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Loading...</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-tertiary);">Memória RAM Livre:</span>
+          <strong id="hw-ram-free">Loading...</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-tertiary);">Tempo de Atividade (Uptime):</span>
+          <strong id="hw-uptime">Loading...</strong>
+        </div>
+      </div>
+
+      <!-- Volume Disk Space -->
+      <div id="hw-disk-space" style="margin-top: 8px;">
+        <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 6px;">Armazenamento Local</span>
+        <div style="display: flex; flex-direction: column; gap: 6px;" id="disk-list-container">
+          <!-- Dynamically filled -->
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 2: KNOWLEDGE GRAPH INTERACTIVE VIEWER -->
+    <div class="card graph-card" style="display: flex; flex-direction: column; gap: 12px; min-height: 250px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
+          <i class="ti ti-chart-sankey" style="color: var(--accent);"></i> Knowledge Graph Local
+        </h3>
+        <button class="action-btn" onclick="triggerGraphScan()" style="height: 20px; font-size: 9px; padding: 0 6px;">
+          <i class="ti ti-scan"></i> Escanear
+        </button>
+      </div>
+
+      <!-- Graph viewport SVG container -->
+      <div class="graph-viewport" style="flex-grow: 1; min-height: 160px; background: var(--bg-surface-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-light); position: relative; overflow: hidden;">
+        <svg id="dashboard-graph-svg" style="width: 100%; height: 100%; cursor: grab;"></svg>
+        <div style="position: absolute; bottom: 6px; right: 6px; font-size: 8px; color: var(--text-tertiary); font-family: var(--font-mono); background: rgba(0,0,0,0.2); padding: 2px 4px; border-radius: 2px;">Arraste para mover</div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-tertiary);">
+        <span id="graph-stats-nodes">Nós: 0</span>
+        <span id="graph-stats-edges">Relações: 0</span>
+      </div>
+    </div>
+
+    <!-- CARD 3: PLANNER AUTÔNOMO PIPELINE -->
+    <div class="card planner-card" style="display: flex; flex-direction: column; gap: 12px; min-height: 280px; grid-column: span 1;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
+          <i class="ti ti-checklist" style="color: var(--color-text-success);"></i> Planner Autônomo
+        </h3>
+        <button class="action-btn" onclick="openNewPlanModal()" style="height: 20px; font-size: 9px; padding: 0 6px;">
+          <i class="ti ti-plus"></i> Novo Plano
+        </button>
+      </div>
+
+      <div class="planner-scroll" style="flex-grow: 1; overflow-y: auto; max-height: 200px; display: flex; flex-direction: column; gap: 10px;" id="planner-plans-container">
+        <!-- Dynamically populated -->
+        <div style="font-size: 11px; text-align: center; color: var(--text-tertiary); padding: 20px;">Nenhum plano de tarefa criado ainda.</div>
+      </div>
+    </div>
+
+    <!-- CARD 4: COGNITIVE SYSTEM INSIGHTS -->
+    <div class="card insights-card" style="display: flex; flex-direction: column; gap: 12px; min-height: 280px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
+          <i class="ti ti-bulb" style="color: var(--color-text-warning);"></i> Insights do Sistema & RAG
+        </h3>
+        <button class="action-btn" onclick="triggerRAGIndexation()" style="height: 20px; font-size: 9px; padding: 0 6px;" title="Indexar código local no RAG">
+          <i class="ti ti-database"></i> Indexar RAG
+        </button>
+      </div>
+
+      <!-- Index RAG status -->
+      <div id="rag-index-status" style="font-size: 10px; background: var(--bg-surface-alt); padding: 6px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-secondary);"><i class="ti ti-database"></i> Status do RAG:</span>
+        <strong id="rag-status-value">Carregando...</strong>
+      </div>
+
+      <div class="insights-scroll" style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;" id="insights-list-container">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <!-- CARD 5: AUDITORIA GLOBAL LOGS (Span Full Width) -->
+    <div class="card logs-card" style="display: flex; flex-direction: column; gap: 12px; grid-column: 1 / -1; min-height: 200px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+        <h3 style="font-size: 14px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
+          <i class="ti ti-terminal-2" style="color: var(--color-text-danger);"></i> Auditoria Global (Logs)
+        </h3>
+        <div style="display: flex; gap: 6px;">
+          <button class="action-btn" onclick="clearAuditLogsMock()" style="height: 20px; font-size: 9px; padding: 0 6px;">
+            <i class="ti ti-trash"></i> Limpar Tela
+          </button>
+        </div>
+      </div>
+
+      <div class="console-viewport" style="background: #0f141c; color: #a5b4fc; font-family: var(--font-mono); font-size: 11px; padding: 12px; border-radius: var(--radius-sm); height: 120px; overflow-y: auto; line-height: 1.5;" id="audit-logs-viewport">
+        <!-- Live logs filled here -->
+        <div>[SYSTEM] Auditoria global operacional. Aguardando eventos...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COMMAND PALETTE / RAYCAST MODAL -->
+  <div id="command-palette-modal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: flex-start; justify-content: center; padding-top: 10vh; backdrop-filter: blur(4px);">
+    <div class="card command-palette-card" style="width: 100%; max-width: 600px; padding: 0; overflow: hidden; border: 1px solid var(--border-medium); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+      <div style="display: flex; align-items: center; padding: 14px; border-bottom: 1px solid var(--border-light); gap: 10px; background: var(--bg-surface);">
+        <i class="ti ti-search" style="font-size: 20px; color: var(--text-secondary);"></i>
+        <input type="text" id="command-palette-input" placeholder="O que deseja fazer? Digite um comando ou atalho..." style="flex: 1; border: none; background: transparent; color: var(--text-primary); font-size: 14px; outline: none;" oninput="filterCommandPalette()">
+        <span style="font-size: 10px; color: var(--text-tertiary); background: var(--bg-surface-alt); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono);">ESC</span>
+      </div>
+      <div id="command-palette-results" style="max-height: 300px; overflow-y: auto; padding: 6px 0;">
+        <!-- Filled with list items -->
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAN CREATOR MODAL -->
+  <div id="new-plan-modal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div class="card" style="width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px;">
+      <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Criar Novo Plano de Tarefa Autônoma</h3>
+      
+      <div class="form-group">
+        <label for="plan-title-input">Nome/Meta do Plano</label>
+        <input type="text" id="plan-title-input" placeholder="Ex: Ajustar e testar scripts de RAG" style="width: 100%;">
+      </div>
+
+      <div class="form-group">
+        <label>Passos do Planejamento</label>
+        <div id="plan-steps-creator-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+          <!-- Steps will be added dynamically -->
+        </div>
+        <button class="action-btn" onclick="addStepToPlanCreator()" style="font-size: 11px; width: 100%; justify-content: center;">
+          <i class="ti ti-plus"></i> Adicionar Passo
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+        <button class="action-btn" onclick="closeNewPlanModal()" style="border-color: transparent;">Cancelar</button>
+        <button class="action-btn" onclick="submitNewPlan()" style="background: var(--accent); color: white; border-color: var(--accent);">Criar Plano</button>
+      </div>
+    </div>
+  </div>
+
+</section>

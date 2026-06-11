@@ -1,0 +1,103 @@
+/* ═══════════════════════════════════════════════════
+   NOTES & BRAIN WRITER STYLES
+   ═══════════════════════════════════════════════════ */
+
+/* Obsidian explorer split */
+.notes-explorer-split {
+  display: flex;
+  gap: 12px;
+  flex-grow: 1;
+  overflow: hidden;
+  height: calc(100% - 80px);
+}
+
+.notes-files-sidebar {
+  width: 180px;
+  border-right: 1px solid var(--border-light);
+  overflow-y: auto;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.note-sidebar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: var(--bg-surface-alt);
+  border: 1px solid transparent;
+  font-size: 11px;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
+}
+
+.note-sidebar-item:hover {
+  background: var(--bg-input);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.note-sidebar-item.active {
+  background: var(--accent-surface);
+  border-color: var(--accent-translucent);
+  color: var(--accent);
+  font-weight: 600;
+  }
+
+.note-editor-viewport {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.note-active-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  gap: 8px;
+}
+
+.note-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 6px;
+}
+
+.note-editor-title-input {
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 4px 0;
+  width: 70%;
+  outline: none;
+}
+
+.note-editor-textarea {
+  flex-grow: 1;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  padding: 12px;
+  resize: none;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.note-editor-textarea:focus {
+  border-color: var(--accent);
+}

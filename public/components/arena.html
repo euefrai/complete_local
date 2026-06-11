@@ -1,0 +1,169 @@
+<section id="tab-content-arena" class="tab-panel active">
+  <div class="panel-header">
+    <div>
+      <h1>Debate Arena</h1>
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Coloque múltiplos modelos de IA para conversar, debater e criar juntos.</p>
+    </div>
+    <div class="header-actions">
+      <button class="action-btn" onclick="toggleThoughtsDrawer()" aria-label="Ver Pensamentos" title="Ver Pensamentos">
+        <i class="ti ti-brain" aria-hidden="true"></i>
+        <span>Pensamentos</span>
+      </button>
+      <button class="action-btn" onclick="clearChat()" aria-label="Limpar histórico do chat">
+        <i class="ti ti-trash" aria-hidden="true"></i>
+        <span>Limpar Arena</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="arena-main-layout">
+    <!-- Chat Container -->
+    <div class="chat-container">
+      <!-- Chat Feed -->
+      <div class="chat-feed" id="chat-feed">
+        <!-- Welcome Info Card (Vexx styled Card) -->
+        <div class="welcome-card card">
+          <h2>Bem-vindo à Vexx AI Debate Arena</h2>
+          <p>Configure suas chaves de API para iniciar discussões humanas e colaborativas entre diferentes Inteligências Artificiais em tempo real.</p>
+          
+          <div style="margin-top: 16px;">
+            <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-secondary); margin-bottom: 8px;">O que você pode fazer:</h3>
+            <table class="features-table">
+              <tbody>
+                <tr>
+                  <td style="width: 30px;"><i class="ti ti-users" style="color: var(--color-text-info);"></i></td>
+                  <td><strong>Discussão Humana:</strong> As IAs debatem entre si respondendo aos argumentos das outras.</td>
+                </tr>
+                <tr>
+                  <td><i class="ti ti-search" style="color: var(--color-text-success);"></i></td>
+                  <td><strong>Busca Web:</strong> Elas pesquisam na internet em tempo real para obter informações atualizadas.</td>
+                </tr>
+                <tr>
+                  <td><i class="ti ti-download" style="color: var(--color-text-warning);"></i></td>
+                  <td><strong>Criação de Arquivos:</strong> Peça scripts ou códigos e baixe-os com um clique.</td>
+                </tr>
+                <tr>
+                  <td><i class="ti ti-star" style="color: var(--color-text-danger);"></i></td>
+                  <td><strong>Imagens Integradas:</strong> Peça fotos ou desenhos e elas geram e baixam no chat.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="warning-alert" id="no-keys-warning">
+            <i class="ti ti-lock" aria-hidden="true"></i>
+            <div>Nenhuma chave de API configurada. Por favor, acesse a aba <a href="#" onclick="switchTab('settings')" style="color: var(--color-text-warning); font-weight: 500;">Configurações API</a> para configurar as chaves.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thinking / Streaming status indicator -->
+      <div class="typing-indicator-container" id="typing-indicator" style="display: none;">
+        <div class="avatar-circle" id="typing-avatar">AI</div>
+        <div class="typing-bubble">
+          <span class="typing-model-name" id="typing-model-name">Modelo</span> está digitando
+          <div class="dots-loader">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Input Control Panel (Refactored to match screenshot exactly) -->
+      <div class="chat-input-wrapper">
+        <!-- Parameter controls in a sleek header bar above input -->
+        <div class="input-params-bar">
+          <div class="param-item">
+            <input type="checkbox" id="param-search" checked>
+            <label for="param-search" title="Permite que as IAs usem o DuckDuckGo para buscar conteúdo online atualizado.">
+              <i class="ti ti-search" aria-hidden="true"></i> Busca na Web
+            </label>
+          </div>
+
+          <div class="param-item">
+            <input type="checkbox" id="param-debate" checked>
+            <label for="param-debate" title="Se ativo, os modelos comentam as respostas uns dos outros em rodadas.">
+              <i class="ti ti-message-circle" aria-hidden="true"></i> Modo Debate
+            </label>
+          </div>
+          
+          <div class="param-item-separator"></div>
+
+          <div class="param-item">
+            <label for="param-primary">Líder:</label>
+            <select id="param-primary" style="height: 20px; padding: 0 4px; font-size: 10px;" onchange="updateActiveModelDisplay()">
+              <option value="gemini">Gael (Gemini 1)</option>
+              <option value="gemini2">Gabriela (Gemini 2)</option>
+              <option value="groq">Gregório (Groq)</option>
+              <option value="openrouter">Orlando (OpenRouter)</option>
+              <option value="openai">Olavo (OpenAI 1)</option>
+              <option value="openai2">Otávio (OpenAI 2)</option>
+              <option value="huggingface">Hugo (Hugging Face 1)</option>
+              <option value="huggingface2">Heitor (Hugging Face 2)</option>
+              <option value="huggingface3">Helena (Hugging Face 3)</option>
+              <option value="cohere" selected>Júlia (Cohere)</option>
+              <option value="claude">Clara (Claude)</option>
+              <option value="cerebras">Cecília (Cerebras)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- File Attachments Preview Panel -->
+        <div class="attachments-preview" id="attachments-preview" style="display: none;"></div>
+
+        <!-- Wrap Up Floating Button -->
+        <button class="wrap-up-btn" id="wrap-up-btn" onclick="wrapUpDebateAction()" style="display: none;" title="Concluir assunto após a resposta atual">
+          <i class="ti ti-hourglass" aria-hidden="true"></i>
+          <span>Concluir Assunto</span>
+        </button>
+
+        <!-- Centered input box and floating star emblem -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; max-width: 780px; margin: 0 auto; position: relative;">
+          <div class="chat-input-area" style="flex: 1; max-width: none; margin: 0;">
+            <button class="input-action-btn" id="attach-btn" onclick="triggerFileInput()" aria-label="Anexar arquivos ou imagens" title="Anexar arquivos">
+              <i class="ti ti-plus" aria-hidden="true"></i>
+            </button>
+            <input type="file" id="file-input" multiple style="display: none;" onchange="handleFileSelect(event)">
+
+            <textarea id="chat-message-input" placeholder="Escreva uma mensagem..." rows="1" oninput="adjustTextareaHeight(this)"></textarea>
+            
+            <div class="input-right-controls">
+              <span class="active-model-badge" id="active-model-name-display">Gemini 2.5 Flash</span>
+              <button class="input-action-btn" onclick="toggleSpeechRecognition()" aria-label="Usar microfone" title="Usar microfone"><i class="ti ti-microphone"></i></button>
+              <button class="input-action-btn" onclick="speakLastMessage()" aria-label="Ouvir" title="Ouvir"><i class="ti ti-volume"></i></button>
+              <button class="send-btn" id="send-btn" onclick="startDebate()" aria-label="Enviar mensagem" title="Enviar mensagem">
+                <i class="ti ti-arrow-up" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Floating Star Emblem -->
+          <div class="vexx-star-glow" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%); cursor: pointer; flex-shrink: 0; transition: transform 0.2s ease-in-out;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: rgba(255, 255, 255, 0.45); filter: drop-shadow(0 0 4px rgba(167, 139, 250, 0.3));">
+              <path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z"/>
+            </svg>
+          </div>
+        </div>
+        
+        <div class="chat-disclaimer">
+          Vexx Arena é uma IA e pode cometer erros. Por favor, verifique as respostas importantes.
+        </div>
+      </div>
+    </div>
+
+    <!-- Thought Timeline Drawer -->
+    <aside class="thought-timeline-drawer collapsed" id="thought-timeline-drawer">
+      <div class="drawer-header">
+        <span class="drawer-title"><i class="ti ti-brain"></i> Linha de Pensamentos</span>
+        <button class="close-drawer-btn" onclick="toggleThoughtsDrawer()" title="Fechar Painel">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="drawer-body" id="thought-timeline-list">
+        <div class="drawer-empty-state">
+          <i class="ti ti-bulb"></i>
+          <p>Monólogos internos e IAs silenciosas aparecerão aqui em tempo real.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>

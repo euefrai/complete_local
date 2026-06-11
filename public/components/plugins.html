@@ -1,0 +1,65 @@
+<section id="tab-content-plugins" class="tab-panel">
+  <div class="panel-header">
+    <div>
+      <h1>Sistema de Plugins Modulares</h1>
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Estenda as habilidades das IAs e adicione novas rotas ou interfaces dinâmicas.</p>
+    </div>
+  </div>
+
+  <div class="plugins-workspace-layout" style="display: flex; gap: 1.25rem; padding: 1.25rem; flex-grow: 1; overflow: hidden; height: calc(100% - 60px);">
+    
+    <!-- Coluna Esquerda: Listagem de Plugins -->
+    <div class="plugins-column card flex-column" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+      <div class="column-header-title" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+        <i class="ti ti-plug" style="color: var(--accent); font-size: 18px;"></i>
+        <h2 style="font-size: 15px; margin: 0; font-weight: 600;">Plugins Instalados</h2>
+      </div>
+
+      <div class="plugins-list-scroll" id="installed-plugins-list" style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+        <!-- Filled dynamically -->
+        <div style="font-size: 11px; text-align: center; color: var(--text-tertiary); padding: 20px;">Nenhum plugin carregado.</div>
+      </div>
+    </div>
+
+    <!-- Coluna Direita: Criar Novo Plugin -->
+    <div class="plugins-column card flex-column" style="flex: 1.2; display: flex; flex-direction: column; overflow-y: auto;">
+      <div class="column-header-title" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+        <i class="ti ti-file-plus" style="color: var(--accent); font-size: 18px;"></i>
+        <h2 style="font-size: 15px; margin: 0; font-weight: 600;">Criar Novo Plugin</h2>
+      </div>
+
+      <form id="create-plugin-form" onsubmit="handleCreatePlugin(event)" style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; gap: 8px;">
+          <div class="form-group" style="flex: 1; margin: 0;">
+            <label for="plugin-name-input">Nome do Plugin</label>
+            <input type="text" id="plugin-name-input" placeholder="Ex: Meu Plugin de Git" style="height: 32px;" required>
+          </div>
+          <div class="form-group" style="flex: 1; margin: 0;">
+            <label for="plugin-id-input">ID Único (Folder ID)</label>
+            <input type="text" id="plugin-id-input" placeholder="Ex: git-helper" style="height: 32px;" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="plugin-desc-input">Descrição</label>
+          <input type="text" id="plugin-desc-input" placeholder="O que este plugin faz..." style="height: 32px;">
+        </div>
+
+        <div class="form-group">
+          <label for="plugin-code-input">Código JS (index.js)</label>
+          <textarea id="plugin-code-input" placeholder="// Seu código Javascript executado no carregamento..." rows="6" style="font-family: var(--font-mono); font-size: 11px; padding: 8px;" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="plugin-css-input">Estilos CSS Opcionais (styles.css)</label>
+          <textarea id="plugin-css-input" placeholder="/* Seus estilos CSS customizados... */" rows="3" style="font-family: var(--font-mono); font-size: 11px; padding: 8px;"></textarea>
+        </div>
+
+        <button type="submit" class="action-btn" style="background: var(--accent); color: white; border-color: var(--accent); justify-content: center; height: 34px;">
+          <i class="ti ti-plus"></i> Instalar Plugin
+        </button>
+      </form>
+    </div>
+
+  </div>
+</section>

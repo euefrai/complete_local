@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vexx Copilot Sidebar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="sidebar.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-logo">
+      <i class="ti ti-activity logo-icon"></i>
+      <span>VEXX <strong>Copilot</strong></span>
+    </div>
+    <div class="server-status" id="server-status" title="Status de conexão com wifa jl OS local">
+      <span class="status-dot"></span>
+      <span class="status-text">Conectando...</span>
+    </div>
+  </header>
+
+  <!-- AI AGENT SELECTION TRAY -->
+  <section class="ai-selection-tray">
+    <div class="tray-header">
+      <span class="tray-title"><i class="ti ti-users"></i> Arena de Agentes</span>
+      <div class="mode-selector">
+        <button class="mode-btn active" id="mode-single" title="Apenas uma IA responde">Solo</button>
+        <button class="mode-btn" id="mode-debate" title="Várias IAs debatem e escolhem a melhor resposta">Arena</button>
+      </div>
+    </div>
+    
+    <div class="agents-grid" id="agents-grid">
+      <!-- Generated dynamically by sidebar.js -->
+    </div>
+  </section>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="app-tabs-nav">
+    <button class="tab-btn active" id="tab-copilot">
+      <i class="ti ti-rocket"></i> Copilot
+    </button>
+    <button class="tab-btn" id="tab-arena">
+      <i class="ti ti-message-2"></i> Chat Arena
+    </button>
+    <button class="tab-btn" id="tab-settings">
+      <i class="ti ti-chart-pie"></i> Painel
+    </button>
+  </nav>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="app-viewport">
+    
+    <!-- TAB 1: COPILOT CONTEXTUAL -->
+    <div class="tab-pane active" id="pane-copilot">
+
+      <!-- Permissions Banner (Onboarding) -->
+      <div id="permissions-banner" class="permissions-banner hidden" style="background: rgba(239, 159, 39, 0.06); border: 0.5px solid var(--color-border-secondary); padding: 12px; border-radius: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <div class="banner-header" style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--color-text-warning);">
+          <i class="ti ti-shield-alert" style="font-size: 16px;"></i>
+          <span>Permissões Necessárias</span>
+        </div>
+        <p class="banner-text" style="font-size: 11px; color: var(--color-text-secondary); margin: 0; line-height: 1.4;">O Vexx Copilot precisa de algumas permissões para habilitar todos os recursos de áudio e notificações:</p>
+        <div class="permissions-checklist" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+          <div class="permission-item" id="perm-mic-item" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: var(--color-background-primary); border-radius: 6px; border: 0.5px solid var(--color-border-tertiary); font-size: 11px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-microphone perm-icon" style="font-size: 14px;"></i>
+              <span>Microfone (Voice Input)</span>
+            </div>
+            <button class="mini-btn mini-btn-primary perm-btn" id="btn-request-mic" style="margin: 0; min-width: 50px;">Ativar</button>
+          </div>
+          <div class="permission-item" id="perm-notif-item" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: var(--color-background-primary); border-radius: 6px; border: 0.5px solid var(--color-border-tertiary); font-size: 11px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-bell perm-icon" style="font-size: 14px;"></i>
+              <span>Notificações (Alertas)</span>
+            </div>
+            <button class="mini-btn mini-btn-primary perm-btn" id="btn-request-notif" style="margin: 0; min-width: 50px;">Ativar</button>
+          </div>
+        </div>
+        <button class="btn-secondary" id="btn-dismiss-permissions" style="margin-top: 6px; width: 100%; justify-content: center; height: 26px; font-size: 11px; padding: 0;">Continuar sem ativar</button>
+      </div>
+      
+      <!-- Context Area -->
+      <div class="content-card">
+        <div class="card-header">
+          <span class="card-title"><i class="ti ti-world"></i> Contexto da Tela</span>
+          <div class="header-actions" style="display: flex; gap: 6px;">
+            <button class="action-icon-btn" id="btn-capture-screen" title="Capturar Tela (Screenshot)">
+              <i class="ti ti-camera"></i>
+            </button>
+            <button class="action-icon-btn" id="btn-refresh-context" title="Recarregar dados da tela">
+              <i class="ti ti-refresh"></i>
+            </button>
+          </div>
+        </div>
+        <div class="context-info">
+          <div class="context-row">
+            <span class="context-label">Local:</span>
+            <span class="context-value" id="context-page-type">Aguardando...</span>
+          </div>
+          <div class="context-row">
+            <span class="context-label">Contato:</span>
+            <span class="context-value" id="context-contact-name">-</span>
+          </div>
+          <div class="context-row hidden" id="context-bio">
+            <!-- Bio renderizada dinamicamente pelo ui.js -->
+          </div>
+          <div class="context-msg-preview">
+            <span class="context-label">Última msg:</span>
+            <p id="context-last-message" class="text-secondary italic">Aguardando leitura de dados da aba ativa...</p>
+          </div>
+
+          <!-- Deep Details (Fase 1) -->
+          <div class="context-deep-details hidden" id="context-deep-container" style="border-top: 0.5px solid var(--color-border-tertiary); padding-top: 10px; margin-top: 8px;">
+            <div class="context-row">
+              <span class="context-label">Seguidores:</span>
+              <span class="context-value" id="context-followers">-</span>
+            </div>
+            <div class="context-row">
+              <span class="context-label">Engajamento:</span>
+              <span class="context-value" id="context-engagement">-</span>
+            </div>
+            <div class="context-row">
+              <span class="context-label">Sentimento:</span>
+              <span class="context-value" id="context-sentiment">-</span>
+            </div>
+            <div class="context-row" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+              <span class="context-label">Hashtags:</span>
+              <div class="hashtags-tray" id="context-hashtags" style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;">-</div>
+            </div>
+          </div>
+          
+          <button class="context-toggle-btn" id="context-deep-toggle" style="background: transparent; border: none; color: var(--color-accent-amethyst); cursor: pointer; font-size: 11px; display: flex; align-items: center; gap: 4px; padding: 4px 0; margin-top: 8px; font-weight: 500; font-family: var(--font-sans);">
+            <i class="ti ti-chevron-down"></i> Detalhes Profundos
+          </button>
+
+          <!-- Screenshot Preview Area (Fase 2) -->
+          <div class="screenshot-area hidden" id="screenshot-area" style="border-top: 0.5px solid var(--color-border-tertiary); padding-top: 10px; margin-top: 8px;">
+            <span class="context-label" style="display: block; margin-bottom: 6px;">Visualização da Tela:</span>
+            <div class="screenshot-preview-wrapper" style="position: relative; border-radius: 8px; overflow: hidden; border: 0.5px solid var(--color-border-secondary);">
+              <img id="screenshot-preview" src="" alt="Screenshot Preview" style="width: 100%; display: block; max-height: 150px; object-fit: cover;">
+            </div>
+            <button class="btn-secondary" id="btn-analyze-visual" style="margin-top: 8px; width: 100%; justify-content: center; font-size: 12px; height: 28px; padding: 0 10px;">
+              <i class="ti ti-eye"></i> Analisar Visualmente
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Audit Card -->
+      <div class="content-card" style="margin-top: 1rem;">
+        <div class="card-header">
+          <span class="card-title"><i class="ti ti-device-analytics"></i> Auditoria Visual Passo a Passo</span>
+          <span id="audit-status-badge" class="badge badge-accent hidden" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--color-accent-amethyst); color: var(--color-background-primary); font-weight: bold; display: none;">Parte 1</span>
+        </div>
+        <div style="padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+          <p class="text-secondary" style="font-size: 11px; margin: 0; line-height: 1.4;">
+            A IA analisará a tela em partes. Clique em iniciar para analisar a primeira seção, depois clique para rolar e analisar a próxima parte. No final, será gerado um relatório consolidado.
+          </p>
+          <div id="audit-progress" class="hidden" style="font-size: 11px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+            <span style="color: var(--color-text-secondary);">Analisando Parte <strong id="audit-parts-count" style="color: var(--color-accent-amethyst);">0</strong>...</span>
+            <span id="audit-loading-spinner" class="spinner-tiny hidden" style="color: var(--color-accent-amethyst);"><i class="ti ti-loader" style="display: inline-block; animation: spin 1.5s linear infinite;"></i></span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-primary" id="btn-start-audit" style="flex: 1; justify-content: center; font-size: 12px; height: 32px; padding: 0 12px; width: 100%;">
+              <i class="ti ti-play-card" style="margin-right: 4px;"></i> Iniciar Auditoria
+            </button>
+            <button class="btn-primary hidden" id="btn-next-audit-step" style="flex: 1; justify-content: center; font-size: 12px; height: 32px; padding: 0 12px;">
+              <i class="ti ti-arrow-down-circle" style="margin-right: 4px;"></i> Analisar Próxima
+            </button>
+            <button class="btn-secondary btn-danger hidden" id="btn-stop-audit" style="justify-content: center; font-size: 12px; height: 32px; padding: 0 12px; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #ef4444;">
+              <i class="ti ti-circle-x" style="margin-right: 4px;"></i> Parar e Relatório
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions Tray -->
+      <div id="quick-actions-tray" class="quick-actions-tray hidden">
+        <!-- Pílulas renderizadas dinamicamente por quick-actions.js -->
+      </div>
+
+      <!-- Action Config Form -->
+      <div class="action-controls">
+        <label class="control-label" for="tone-select">Tom da Resposta</label>
+        <select id="tone-select" class="form-select">
+          <option value="friendly">Amigável e Próximo (Geração de Rapport)</option>
+          <option value="professional">Profissional e Técnico (Autoridade)</option>
+          <option value="closing">Fechamento Rápido (Contorno de Objeção / Link de Compra)</option>
+          <option value="support">Suporte Resolutivo (Solucionar Dúvidas)</option>
+          <option value="custom">Prompt Customizado (Especificar Abaixo)</option>
+        </select>
+        
+        <input type="text" id="custom-prompt-input" class="form-input hidden" placeholder="Ex: Peça o e-mail dela de forma educada...">
+        
+        <div class="action-btn-row">
+          <button class="action-btn action-btn-main" id="btn-generate-replies">
+            <i class="ti ti-cpu"></i> <span id="btn-generate-text">Analisar & Responder</span>
+          </button>
+          <button class="voice-btn" id="btn-voice-input" title="Gravar áudio para transcrição">
+            <i class="ti ti-microphone"></i>
+          </button>
+        </div>
+        <div class="voice-feedback hidden" id="voice-feedback">
+          <span id="voice-status" class="voice-status-text hidden">Gravando...</span>
+          <span id="voice-timer" class="voice-timer hidden">0:00</span>
+        </div>
+      </div>
+
+      <!-- Copilot Output Arena -->
+      <div class="copilot-output-container">
+        <div class="section-title">Sugestões de Respostas</div>
+        
+        <div id="copilot-loader" class="loader-container hidden">
+          <div class="dots-loader">
+            <span></span><span></span><span></span>
+          </div>
+          <p id="loader-status" class="text-tertiary">Arena processando...</p>
+        </div>
+
+        <div id="copilot-results" class="results-list">
+          <div class="empty-state text-secondary italic">
+            Nenhuma resposta gerada ainda. Clique em "Analisar & Responder" acima.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: GENERAL DEBATE ARENA -->
+    <div class="tab-pane" id="pane-arena">
+      <div class="chat-area" id="arena-chat-messages">
+        <div class="chat-welcome">
+          <i class="ti ti-messages chat-welcome-icon"></i>
+          <h3>Arena Geral</h3>
+          <p class="text-secondary">Envie uma mensagem livre para os agentes selecionados debaterem entre si e ajudarem você.</p>
+        </div>
+      </div>
+      
+      <div class="chat-input-container">
+        <div class="pill-chat-input">
+          <input type="text" id="arena-chat-input" placeholder="Digite uma dúvida ou instrução para a Arena...">
+          <button class="send-input-btn" id="btn-send-arena" title="Enviar para a Arena">
+            <i class="ti ti-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: ADJUSTS AND API USAGE -->
+    <div class="tab-pane" id="pane-settings">
+      
+      <!-- Usage widget like Desktop app -->
+      <div class="content-card text-center">
+        <div class="dashboard-header-row">
+          <span class="card-title"><i class="ti ti-chart-pie"></i> Consumo Local</span>
+          <button class="reset-usage-btn" id="btn-reset-usage" title="Zerar requisições">
+            <i class="ti ti-rotate-clockwise"></i>
+          </button>
+        </div>
+        
+        <div class="dashboard-circle-row">
+          <div class="dashboard-circle-wrapper">
+            <svg class="dashboard-circle-svg" viewBox="0 0 36 36">
+              <circle class="dashboard-circle-bg" cx="18" cy="18" r="15.915"></circle>
+              <circle class="dashboard-circle-bar" id="main-usage-bar" cx="18" cy="18" r="15.915" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+            </svg>
+            <div class="dashboard-circle-text">
+              <span class="dashboard-num" id="main-usage-num">0</span>
+              <span class="dashboard-pct" id="main-usage-pct">0%</span>
+            </div>
+          </div>
+          <div class="dashboard-summary-text">
+            <div class="summary-total"><strong id="usage-total-requests">0</strong> requisições</div>
+            <div class="summary-subtitle">Consumo acumulado do Copilot</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CRM / Leads Salvos -->
+      <div class="content-card" style="margin-top: 1rem;">
+        <div class="card-header">
+          <span class="card-title"><i class="ti ti-address-book"></i> Leads Salvos (<span id="leads-count">0</span>)</span>
+          <div style="display: flex; gap: 4px;">
+            <button class="action-icon-btn" id="btn-export-leads" title="Exportar leads para CSV">
+              <i class="ti ti-file-download"></i>
+            </button>
+            <button class="action-icon-btn" id="btn-clear-leads" title="Limpar todos os leads">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
+        </div>
+        <div id="leads-list-container" class="leads-list" style="max-height: 250px; overflow-y: auto;">
+          <div class="empty-state text-secondary italic" style="padding: 1rem;">
+            Nenhum lead salvo ainda. Analise uma conversa e clique em "Salvar Lead".
+          </div>
+        </div>
+      </div>
+
+      <!-- Memory Section (Fase 3) -->
+      <div class="content-card" style="margin-top: 1rem;">
+        <div class="card-header">
+          <span class="card-title"><i class="ti ti-brain"></i> Memória do Copiloto</span>
+          <div style="display: flex; gap: 4px;">
+            <button class="action-icon-btn" id="btn-export-memory" title="Exportar Memória (JSON)">
+              <i class="ti ti-download"></i>
+            </button>
+            <button class="action-icon-btn" id="btn-clear-memory" title="Limpar Memória do Histórico">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="memory-panel" style="padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+          <div class="memory-stats-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center;">
+            <div style="background: var(--color-background-primary); padding: 8px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+              <span style="font-size: 10px; color: var(--color-text-secondary); display: block;">Perfis</span>
+              <strong id="memory-stat-profiles" style="font-size: 14px;">0</strong>
+            </div>
+            <div style="background: var(--color-background-primary); padding: 8px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+              <span style="font-size: 10px; color: var(--color-text-secondary); display: block;">Interações</span>
+              <strong id="memory-stat-interactions" style="font-size: 14px;">0</strong>
+            </div>
+            <div style="background: var(--color-background-primary); padding: 8px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+              <span style="font-size: 10px; color: var(--color-text-secondary); display: block;">Recorrência</span>
+              <strong id="memory-stat-recurrence" style="font-size: 14px;">0</strong>
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 11px; font-weight: 500; display: block; margin-bottom: 6px; color: var(--color-text-secondary);"><i class="ti ti-history"></i> Perfis Recentes na Memória</span>
+            <div id="memory-recent-list" style="max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 4px; background: var(--color-background-primary); border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+              <span class="text-secondary italic" style="font-size: 11px; padding: 4px;">Nenhum perfil memorizado ainda.</span>
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 11px; font-weight: 500; display: block; margin-bottom: 6px; color: var(--color-text-secondary);"><i class="ti ti-chart-line"></i> Padrões & Tendências</span>
+            <div id="memory-trends-container" style="font-size: 11px; display: flex; flex-direction: column; gap: 6px; background: var(--color-background-primary); padding: 8px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+              <div><strong>Top Hashtags:</strong> <span id="memory-trends-hashtags" class="text-secondary">-</span></div>
+              <div><strong>Niches Top:</strong> <span id="memory-trends-niches" class="text-secondary">-</span></div>
+              <div><strong>Pico de Horário:</strong> <span id="memory-trends-hours" class="text-secondary">-</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visualizador de Scraping (Debug) -->
+      <div class="content-card" style="margin-top: 1rem;">
+        <div class="card-header">
+          <span class="card-title"><i class="ti ti-eye"></i> Visualizador de Scraping</span>
+          <button class="action-icon-btn" id="btn-debug-refresh" title="Atualizar Diagnóstico">
+            <i class="ti ti-refresh"></i>
+          </button>
+        </div>
+        <div class="debug-scraping-view" style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: left; background-color: var(--color-background-primary); border-radius: 8px; border: 0.5px solid var(--color-border-tertiary);">
+          <div style="margin-bottom: 8px; display: flex; justify-content: space-between;">
+            <span><strong>Status do Scraper:</strong> <span class="text-success">Ativo</span></span>
+            <span><strong>Mensagens:</strong> <span id="debug-msg-count" style="font-weight: bold;">0</span></span>
+          </div>
+          <div style="max-height: 200px; overflow-y: auto; background-color: #121212; padding: 10px; border-radius: 6px; border: 0.5px solid var(--color-border-quaternary);" id="debug-msg-list">
+            <span class="text-secondary italic">Nenhuma mensagem coletada. Abra um chat ativo no Instagram/WhatsApp e clique no botão de recarregar acima.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customize AI Persona Override -->
+      <div class="settings-group">
+        <label class="control-label" for="system-prompt-override">Instruções do Copilot (System Prompt)</label>
+        <textarea id="system-prompt-override" class="form-textarea" rows="8" placeholder="Instruções padrão do Copilot para formular as respostas..."></textarea>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button class="btn-secondary" id="btn-restore-prompt">Restaurar Padrão</button>
+          <button class="btn-primary" id="btn-save-settings">Salvar Ajustes</button>
+        </div>
+        <span id="save-status" class="save-status-text hidden"><i class="ti ti-check"></i> Salvo!</span>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="config.js"></script>
+  <script src="ui.js"></script>
+  <script src="server.js"></script>
+  <script src="copilot.js"></script>
+  <script src="arena-chat.js"></script>
+  <script src="quick-actions.js"></script>
+  <script src="crm.js"></script>
+  <script src="voice-input.js"></script>
+  <script src="sentiment.js"></script>
+  <script src="screenshot.js"></script>
+  <script src="memory.js"></script>
+  <script src="command-palette.js"></script>
+  <script src="permissions.js"></script>
+  <script src="visual-audit.js"></script>
+  <script src="sidebar.js"></script>
+</body>
+</html>

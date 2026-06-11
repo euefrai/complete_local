@@ -1,0 +1,64 @@
+{
+  "manifest_version": 3,
+  "name": "Vexx AI Copilot",
+  "version": "1.0.0",
+  "description": "Análise contextual inteligente e Arena de Debate de IAs integrada ao wifa jl OS.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs",
+    "notifications"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*",
+    "https://*.whatsapp.com/*",
+    "https://*.instagram.com/*",
+    "https://instagram.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.whatsapp.com/*",
+        "https://*.instagram.com/*",
+        "https://instagram.com/*"
+      ],
+      "js": [
+        "context-engine.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "sidebar.html",
+        "sidebar.css",
+        "sidebar.js",
+        "config.js",
+        "ui.js",
+        "server.js",
+        "copilot.js",
+        "arena-chat.js",
+        "quick-actions.js",
+        "crm.js",
+        "voice-input.js",
+        "context-engine.js",
+        "screenshot.js",
+        "sentiment.js",
+        "memory.js",
+        "command-palette.js",
+        "permissions.js",
+        "visual-audit.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}

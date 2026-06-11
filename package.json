@@ -1,11 +1,12 @@
 {
   "name": "vexx-ai-debate-arena",
-  "version": "1.0.0",
-  "description": "An interactive AI debate arena using Groq, Google Gemini, OpenRouter, and OpenAI, featuring web search, image generation, and automated file downloads.",
-  "main": "server.js",
+  "version": "2.0.0",
+  "description": "An interactive AI debate arena using Groq, Google Gemini, OpenRouter, OpenAI, and Hugging Face, featuring web search, image generation, automated file downloads, and a native desktop app.",
+  "main": "main-desktop.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "desktop": "\"%npm_node_execpath%\" node_modules\\electron\\cli.js ."
   },
   "keywords": [],
   "author": "",
@@ -13,5 +14,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3"
   }
 }

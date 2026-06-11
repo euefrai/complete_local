@@ -1,0 +1,609 @@
+<section id="tab-content-settings" class="tab-panel">
+  <div class="panel-header">
+    <div>
+      <h1>Configurações das APIs</h1>
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Insira suas chaves de API locais. Elas são salvas apenas no seu navegador.</p>
+    </div>
+  </div>
+
+  <div class="settings-grid">
+    
+    <!-- Key Card: Google AI Studio (Gemini) -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle info-bg"><i class="ti ti-star"></i></span>
+          <div>
+            <h3>Google AI Studio (Gemini)</h3>
+            <span class="meta-text">Recomendado - Generosa cota grátis</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_gemini" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-gemini">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-gemini">Chave de API (API Key)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-gemini" placeholder="AIzaSy..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('gemini')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-gemini')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-gemini">Modelo Ativo</label>
+        <select id="model-gemini-select" onchange="handleModelSelectChange('gemini')">
+          <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Padrão)</option>
+          <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-gemini" value="gemini-2.5-flash" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Gratuito: <code>gemini-2.5-flash</code> ou <code>gemini-1.5-flash</code>.</span>
+      </div>
+    </div>
+
+    <!-- Key Card: Google AI Studio (Gemini 2 - Gabriela) -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle info-bg"><i class="ti ti-star"></i></span>
+          <div>
+            <h3>Gemini (Chave 2 - Gabriela)</h3>
+            <span class="meta-text">Segunda chave para o modelo Gemini</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_gemini2" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-gemini2">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-gemini2">Chave de API (API Key)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-gemini2" placeholder="AIzaSy..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('gemini2')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-gemini2')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-gemini2">Modelo Ativo</label>
+        <select id="model-gemini2-select" onchange="handleModelSelectChange('gemini2')">
+          <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Padrão)</option>
+          <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-gemini2" value="gemini-2.5-flash" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Gratuito: <code>gemini-2.5-flash</code> ou <code>gemini-1.5-flash</code>.</span>
+      </div>
+    </div>
+
+    <!-- Key Card: Groq -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle success-bg"><i class="ti ti-mouse"></i></span>
+          <div>
+            <h3>Groq Cloud</h3>
+            <span class="meta-text">Extremamente rápido - Plano Grátis com limites</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_groq" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-groq">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-groq">Chave de API (API Key)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-groq" placeholder="gsk_..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('groq')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-groq')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-groq">Modelo Ativo</label>
+        <select id="model-groq-select" onchange="handleModelSelectChange('groq')">
+          <option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B Versatile (Padrão)</option>
+          <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+          <option value="mixtral-8x7b-32768">Mixtral 8x7b</option>
+          <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill Llama 70B</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-groq" value="llama-3.3-70b-versatile" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Gratuito: <code>llama-3.3-70b-versatile</code> ou <code>llama-3.1-8b-instant</code>.</span>
+      </div>
+    </div>
+
+    <!-- Key Card: OpenRouter -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle neutral-bg"><i class="ti ti-users"></i></span>
+          <div>
+            <h3>OpenRouter</h3>
+            <span class="meta-text">Acesso a diversos modelos gratuitos</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_openrouter" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-openrouter">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-openrouter">Chave de API (API Key)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-openrouter" placeholder="sk-or-v1-..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('openrouter')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-openrouter')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-openrouter">Modelo Ativo</label>
+        <select id="model-openrouter-select" onchange="handleModelSelectChange('openrouter')">
+          <option value="openrouter/free" selected>Free Models Router (Auto-seleção)</option>
+          <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B Instruct (Grátis)</option>
+          <option value="google/gemma-4-31b-it:free">Gemma 4 31B (Grátis)</option>
+          <option value="z-ai/glm-4.5-air:free">GLM 4.5 Air (Grátis)</option>
+          <option value="qwen/qwen3-coder:free">Qwen 3 Coder (Grátis)</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-openrouter" value="openrouter/free" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Use <code>openrouter/free</code> ou modelos terminando em <code>:free</code> (ex: <code>meta-llama/llama-3.3-70b-instruct:free</code>).</span>
+      </div>
+    </div>
+
+    <!-- Key Card: OpenAI -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle warning-bg"><i class="ti ti-keyboard"></i></span>
+          <div>
+            <h3>OpenAI API</h3>
+            <span class="meta-text">Requer saldo pré-pago ou créditos promocionais</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_openai" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-openai">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-openai">Chave de API (API Key)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-openai" placeholder="sk-proj-..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('openai')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-openai')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-openai">Modelo Ativo</label>
+        <select id="model-openai-select" onchange="handleModelSelectChange('openai')">
+          <option value="gpt-4o-mini" selected>GPT-4o Mini (Padrão)</option>
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="o1-mini">o1-mini</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-openai" value="gpt-4o-mini" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Leve e barato: <code>gpt-4o-mini</code>.</span>
+      </div>
+    </div>
+
+    <!-- Key Card: OpenAI (Chave 2 - Otávio) -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle warning-bg"><i class="ti ti-keyboard"></i></span>
+          <div>
+            <h3>OpenAI (Chave 2 - Otávio)</h3>
+            <span class="meta-text">Segunda chave para os modelos OpenAI</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_openai2" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-openai2">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-openai2">Chave de API (API Key)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-openai2" placeholder="sk-proj-..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('openai2')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-openai2')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-openai2">Modelo Ativo</label>
+        <select id="model-openai2-select" onchange="handleModelSelectChange('openai2')">
+          <option value="gpt-4o-mini" selected>GPT-4o Mini (Padrão)</option>
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="o1-mini">o1-mini</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-openai2" value="gpt-4o-mini" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Leve e barato: <code>gpt-4o-mini</code>.</span>
+      </div>
+    </div>
+
+    <!-- Key Card: Hugging Face 1 -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle purple-bg"><i class="ti ti-cpu"></i></span>
+          <div>
+            <h3>Hugo (Hugging Face 1)</h3>
+            <span class="meta-text">Opção Grátis — Token Serverless API</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_huggingface" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-huggingface">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-huggingface">Token de Acesso (Access Token)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-huggingface" placeholder="hf_..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('huggingface')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-huggingface')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-huggingface">Modelo Ativo</label>
+        <select id="model-huggingface-select" onchange="handleModelSelectChange('huggingface')">
+          <option value="Qwen/Qwen2.5-72B-Instruct" selected>Qwen 2.5 72B Instruct (Recomendado)</option>
+          <option value="meta-llama/Llama-3.3-70B-Instruct">Llama 3.3 70B Instruct (Poderoso)</option>
+          <option value="mistralai/Mistral-7B-Instruct-v0.3">Mistral 7B Instruct (Rápido)</option>
+          <option value="microsoft/Phi-3-mini-4k-instruct">Phi-3 Mini (Leve)</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-huggingface" value="Qwen/Qwen2.5-72B-Instruct" placeholder="ex: Qwen/Qwen2.5-Coder-32B-Instruct" oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Gratuito: model_id do Hugging Hub (ex: <code>Qwen/Qwen2.5-72B-Instruct</code>).</span>
+      </div>
+    </div>
+
+    <!-- Key Card: Hugging Face 2 -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle purple-bg"><i class="ti ti-cpu"></i></span>
+          <div>
+            <h3>Heitor (Hugging Face 2)</h3>
+            <span class="meta-text">Oponente — Se vazio, usa o token do HF 1</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_huggingface2" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-huggingface2">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-huggingface2">Token de Acesso (Access Token)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-huggingface2" placeholder="Opcional (Usa chave do HF 1)" oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('huggingface2')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-huggingface2')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-huggingface2">Modelo Ativo</label>
+        <select id="model-huggingface2-select" onchange="handleModelSelectChange('huggingface2')">
+          <option value="meta-llama/Llama-3.3-70B-Instruct" selected>Llama 3.3 70B Instruct (Padrão)</option>
+          <option value="Qwen/Qwen2.5-72B-Instruct">Qwen 2.5 72B Instruct</option>
+          <option value="mistralai/Mistral-7B-Instruct-v0.3">Mistral 7B Instruct</option>
+          <option value="microsoft/Phi-3-mini-4k-instruct">Phi-3 Mini</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-huggingface2" value="meta-llama/Llama-3.3-70B-Instruct" placeholder="ex: Qwen/Qwen2.5-Coder-32B-Instruct" oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Gratuito: model_id do Hugging Hub (ex: <code>meta-llama/Llama-3.3-70B-Instruct</code>).</span>
+      </div>
+    </div>
+
+    <!-- Key Card: Hugging Face 3 -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle purple-bg"><i class="ti ti-cpu"></i></span>
+          <div>
+            <h3>Helena (Hugging Face 3)</h3>
+            <span class="meta-text">Cientista de Dados — Se vazio, usa HF 1 ou HF 2</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_huggingface3" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-huggingface3">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-huggingface3">Token de Acesso (Access Token)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-huggingface3" placeholder="Opcional (Usa chave do HF 1 ou 2)" oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('huggingface3')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-huggingface3')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-huggingface3">Modelo Ativo</label>
+        <select id="model-huggingface3-select" onchange="handleModelSelectChange('huggingface3')">
+          <option value="Qwen/Qwen2.5-72B-Instruct" selected>Qwen 2.5 72B Instruct (Padrão)</option>
+          <option value="meta-llama/Llama-3.3-70B-Instruct">Llama 3.3 70B Instruct</option>
+          <option value="mistralai/Mistral-7B-Instruct-v0.3">Mistral 7B Instruct</option>
+          <option value="microsoft/Phi-3-mini-4k-instruct">Phi-3 Mini</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-huggingface3" value="Qwen/Qwen2.5-72B-Instruct" placeholder="ex: Qwen/Qwen2.5-Coder-32B-Instruct" oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Gratuito: model_id do Hugging Hub (ex: <code>Qwen/Qwen2.5-72B-Instruct</code>).</span>
+      </div>
+    </div>
+
+    <!-- Key Card: Cohere (Júlia) -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle purple-bg"><i class="ti ti-activity"></i></span>
+          <div>
+            <h3>Júlia (Cohere)</h3>
+            <span class="meta-text">Assistente Prática e Direta (Modelo Grátis)</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_cohere" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-cohere">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-cohere">Chave de API (API Key)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-cohere" placeholder="trial_key_..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('cohere')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-cohere')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-cohere">Modelo Ativo</label>
+        <select id="model-cohere-select" onchange="handleModelSelectChange('cohere')">
+          <option value="command-a-03-2025" selected>Command A (Recomendado/Grátis)</option>
+          <option value="command-r7b-12-2024">Command R7B (Leve)</option>
+          <option value="command-r-plus-08-2024">Command R+ (Premium)</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-cohere" value="command-a-03-2025" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Gratuito/Trial: use <code>command-a-03-2025</code>.</span>
+      </div>
+    </div>
+
+    <!-- Key Card: Claude (Clara) -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle info-bg"><i class="ti ti-brain"></i></span>
+          <div>
+            <h3>Clara (Claude / Anthropic)</h3>
+            <span class="meta-text">Cientista Analítica e Detalhista</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_claude" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-claude">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-claude">Chave de API (API Key)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-claude" placeholder="sk-ant-..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('claude')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-claude')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-claude">Modelo Ativo</label>
+        <select id="model-claude-select" onchange="handleModelSelectChange('claude')">
+          <option value="claude-sonnet-4-20250514" selected>Claude Sonnet 4 (Padrão)</option>
+          <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+          <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
+          <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-claude" value="claude-sonnet-4-20250514" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Mais comum: <code>claude-sonnet-4-20250514</code> ou <code>claude-3-5-haiku-20241022</code>.</span>
+      </div>
+    </div>
+
+    <!-- Key Card: Cerebras (Cecília) -->
+    <div class="card key-config-card">
+      <div class="key-card-header">
+        <div class="provider-title">
+          <span class="avatar-circle success-bg"><i class="ti ti-bolt"></i></span>
+          <div>
+            <h3>Cecília (Cerebras)</h3>
+            <span class="meta-text">Assistente Ágil e Perspicaz (Inference Ultra Rápido)</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="vexx-switch" title="Ativar/Desativar Provedor">
+            <input type="checkbox" id="enabled_cerebras" onchange="saveKeys()" checked>
+            <span class="vexx-slider"></span>
+          </label>
+          <span class="badge-neutral" id="badge-cerebras">Não configurado</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="key-cerebras">Chave de API (API Key)</label>
+        <div class="input-password-wrapper">
+          <input type="password" id="key-cerebras" placeholder="csk-..." oninput="saveKeys()">
+          <button class="test-key-btn" onclick="testProviderConnection('cerebras')" title="Testar Conexão">
+            <i class="ti ti-plug"></i>
+          </button>
+          <button class="toggle-password" onclick="togglePasswordVisibility('key-cerebras')">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="model-cerebras">Modelo Ativo</label>
+        <select id="model-cerebras-select" onchange="handleModelSelectChange('cerebras')">
+          <option value="gpt-oss-120b" selected>GPT OSS 120B (Padrão)</option>
+          <option value="zai-glm-4.7">ZAI GLM 4.7</option>
+          <option value="custom">Outro (Personalizado)...</option>
+        </select>
+        <input type="text" id="model-cerebras" value="gpt-oss-120b" placeholder="Digite o ID do modelo..." oninput="saveKeys()" style="margin-top: 8px; display: none;">
+        <span class="meta-text">Modelos oficiais: <code>gpt-oss-120b</code> ou <code>zai-glm-4.7</code>.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Parameters (Temperature, instructions etc) -->
+  <div class="card global-params-card" style="margin-top: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h2 style="font-size: 16px; margin: 0; font-weight: 500;">Parâmetros Globais do Debate</h2>
+      <span id="save-status" class="badge-success" style="font-size: 10px; display: none; padding: 2px 8px;"><i class="ti ti-circle-check" aria-hidden="true"></i> Salvo Localmente</span>
+    </div>
+    <div class="params-row-grid">
+      <div class="form-group">
+        <label for="param-temperature">Temperatura (Criatividade): <span id="temp-val">0.7</span></label>
+        <input type="range" id="param-temperature" min="0" max="1.5" step="0.1" value="0.7" oninput="document.getElementById('temp-val').textContent = this.value; saveKeys()">
+      </div>
+      
+      <div class="form-group">
+        <label for="param-max-tokens">Tamanho da Resposta (Max Tokens)</label>
+        <select id="param-max-tokens" onchange="saveKeys()">
+          <option value="1024">1024 (Mais conciso)</option>
+          <option value="2048" selected>2048 (Padrão)</option>
+          <option value="4096">4096 (Muito longo)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface-alt); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-light);">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label for="param-autonomous-execution" style="margin: 0; font-weight: 600; color: var(--text-primary);">Execução Autônoma de Ações</label>
+        <span class="meta-text" style="margin: 0;">Ignorar confirmação de segurança e rodar comandos e scripts na pasta <code>skills/</code> automaticamente.</span>
+      </div>
+      <label class="vexx-switch" title="Ativar/Desativar Execução Autônoma">
+        <input type="checkbox" id="param-autonomous-execution" onchange="saveKeys()">
+        <span class="vexx-slider"></span>
+      </label>
+    </div>
+
+    <div class="form-group" style="margin-top: 12px;">
+      <label for="param-obsidian-path">Caminho do Obsidian Vault (Opcional)</label>
+      <input type="text" id="param-obsidian-path" placeholder="Ex: C:\Users\efrai\Documents\Obsidian Vault" oninput="saveKeys()">
+      <span class="meta-text">Se fornecido, as notas criadas pelas IAs serão salvas diretamente no seu Obsidian Vault. Se vazio, usará a pasta <code>notes/</code> do projeto.</span>
+    </div>
+
+    <div class="form-group" style="margin-top: 12px;">
+      <label for="param-system-prompt">Instruções de Debate (System Instruction)</label>
+      <textarea id="param-system-prompt" style="height: 100px;" oninput="saveKeys()">Você é uma IA de elite com múltiplos talentos em debate, assistência e desenvolvimento. Habilidades Essenciais:
+1. Conversa & Diálogo Natural: Participe de forma engajadora, analise e comente sobre o ponto de vista dos outros debatedores e evite jargões mecânicos.
+2. Programação, Códigos & Debugging: Crie códigos/scripts extremamente limpos, funcionais, seguros e comentados. Ao ver bugs ou solicitar correções, explique a falha lógica de forma analítica e apresente a solução corrigida pronta para uso.
+3. Engenharia de Prompts: Ajude o usuário a refinar suas ideias transformando instruções vagas em prompts de alta qualidade estruturados.
+4. Comédia, Wit & Humor: Seja espirituoso, adicione sacadas inteligentes e toques de humor leve/sarcasmo elegante quando apropriado para tornar a interação divertida.
+5. Busca Web Avançada: Sempre que dados de pesquisa web forem fornecidos sob [CONTEXTO DE BUSCA WEB REALIZADA], trate-os como verdades absolutas de tempo real, cite as fontes diretamente e integre as informações de forma orgânica.
+Seja direto, dinâmico e adapte sua persona à necessidade da pergunta.</textarea>
+    </div>
+  </div>
+</section>

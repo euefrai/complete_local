@@ -1,0 +1,88 @@
+<section id="tab-content-brain" class="tab-panel">
+  <div class="panel-header">
+    <div>
+      <h1>Cérebro & Tarefas Autônomas</h1>
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Acompanhe o Obsidian local, crie anotações, agende alarmes e execute rotinas autônomas.</p>
+    </div>
+    <div class="header-actions">
+      <button class="action-btn" onclick="loadSchedulerAndNotes()" title="Recarregar dados">
+        <i class="ti ti-refresh"></i>
+        <span>Atualizar</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="brain-workspace-layout" style="display: flex; gap: 1.25rem; padding: 1.25rem; flex: 1; min-height: 0; overflow: hidden;">
+    <!-- Coluna Esquerda: Agendador e Cronômetros -->
+    <div class="brain-column card flex-column" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+      <div class="column-header-title" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <i class="ti ti-alarm" style="color: var(--accent); font-size: 18px;"></i>
+        <h2 style="font-size: 15px; margin: 0; font-weight: 600;">Tarefa Autônoma & Agendador</h2>
+      </div>
+      
+      <!-- Formulário para criar tarefa rápida -->
+      <form id="schedule-form" class="schedule-quick-form" onsubmit="handleQuickSchedule(event)" style="background: var(--bg-surface-alt); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin-bottom: 12px;">
+        <div class="quick-form-row" style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <div class="form-group" style="flex: 1; margin: 0;">
+            <label for="sched-time" style="font-size: 9px; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 3px;">Data & Hora</label>
+            <input type="datetime-local" id="sched-time" style="height: 30px; font-size: 11px;" required>
+          </div>
+          <div class="form-group" style="flex: 1; margin: 0;">
+            <label for="sched-type" style="font-size: 9px; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 3px;">Ação</label>
+            <select id="sched-type" style="height: 30px; font-size: 11px;" required>
+              <option value="alert" selected>Exibir Alerta (Notificação)</option>
+              <option value="execute">Executar Comando Shell</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label for="sched-payload" style="font-size: 9px; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 3px;">Mensagem ou Comando PowerShell</label>
+          <textarea id="sched-payload" placeholder="Ex: 'Hora de salvar as anotações!' ou 'Get-Process | ConvertTo-Json'" rows="2" style="font-size: 11px; padding: 6px;" required></textarea>
+        </div>
+        <button type="submit" class="action-btn" style="width: 100%; justify-content: center; height: 32px; background: var(--accent); color: white; border-color: var(--accent);">
+          <i class="ti ti-plus"></i> Agendar Tarefa
+        </button>
+      </form>
+
+      <!-- Lista de Tarefas Agendadas -->
+      <div class="tasks-scroll-container" style="flex-grow: 1; overflow-y: auto;">
+        <h3 style="font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-light); padding-bottom: 4px; margin-bottom: 8px;">Fila de Agendamentos</h3>
+        <div id="scheduled-tasks-list" class="scheduled-tasks-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="empty-list-state" style="font-size: 11px; color: var(--text-tertiary); text-align: center; padding: 16px;">Nenhum agendamento ativo.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coluna Direita: Obsidian e Dicionário -->
+    <div class="brain-column card flex-column" style="flex: 1.5; display: flex; flex-direction: column; overflow: hidden;">
+      <div class="column-header-title" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <i class="ti ti-notebook" style="color: var(--accent); font-size: 18px;"></i>
+        <h2 style="font-size: 15px; margin: 0; font-weight: 600;">Caderno & Cérebro (Obsidian)</h2>
+      </div>
+      
+      <!-- Seletor de Notas Obsidian e Botão Nova Nota -->
+      <div class="notes-controls-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <button class="action-btn" onclick="showNewNoteModal()" style="height: 30px; font-size: 11px;">
+          <i class="ti ti-file-plus"></i>
+          <span>Nova Nota</span>
+        </button>
+        <span class="vault-indicator-text" id="active-vault-indicator" style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 65%;">notes/ (projeto)</span>
+      </div>
+
+      <div class="notes-explorer-split" style="display: flex; gap: 12px; flex: 1; min-height: 0; overflow: hidden;">
+        <!-- Sidebar de Arquivos MD -->
+        <div class="notes-files-sidebar" id="notes-files-list" style="width: 180px; border-right: 1px solid var(--border-light); overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 4px;">
+          <div class="empty-list-state" style="font-size: 10px; color: var(--text-tertiary); text-align: center; padding: 16px;">Nenhuma nota.</div>
+        </div>
+        
+        <!-- Visualizador / Editor de Nota -->
+        <div class="note-editor-viewport" id="note-editor-viewport" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+          <div class="editor-empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-tertiary); height: 100%; gap: 8px;">
+            <i class="ti ti-edit" style="font-size: 32px; color: var(--border-medium);"></i>
+            <p style="font-size: 11px; margin: 0; max-width: 280px; line-height: 1.5;">Selecione uma nota markdown na lista ou crie uma nova para visualizar e editar o cérebro das IAs.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
