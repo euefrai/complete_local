@@ -8,6 +8,7 @@ const { writeAuditLog } = require('./audit');
 const { getMemoryGlobal } = require('../lib/uabl_context');
 const { guardrailDecision } = require('../lib/uabl_guardrails');
 const { makeUablReport } = require('../lib/uabl_report');
+const { verifyToken } = require('../lib/auth');
 
 
 // Helper function to truncate strings
@@ -20,7 +21,7 @@ function truncateOutput(str, maxChars = 8000) {
 }
 
 // 0. Get system paths
-router.get('/api/terminal/paths', (req, res) => {
+router.get('/api/terminal/paths', verifyToken, (req, res) => {
   const os = require('os');
   const homedir = os.homedir();
   res.json({
@@ -32,7 +33,7 @@ router.get('/api/terminal/paths', (req, res) => {
 });
 
 // 0.1. Get system information / diagnostics
-router.get('/api/terminal/sysinfo', (req, res) => {
+router.get('/api/terminal/sysinfo', verifyToken, (req, res) => {
   const os = require('os');
   const cpus = os.cpus();
   const totalMem = os.totalmem();
@@ -65,7 +66,7 @@ router.get('/api/terminal/sysinfo', (req, res) => {
 });
 
 // 0.2. Find files recursively in a fast/controlled way
-router.post('/api/terminal/find', (req, res) => {
+router.post('/api/terminal/find', verifyToken, (req, res) => {
   const { query, dirPath } = req.body;
   if (!query) {
     return res.status(400).json({ error: 'query parameter is required' });
@@ -98,7 +99,7 @@ router.post('/api/terminal/find', (req, res) => {
 });
 
 // 1. Execute terminal command
-router.post('/api/terminal/execute', async (req, res) => {
+router.post('/api/terminal/execute', verifyToken, async (req, res) => {
   const { command, approved } = req.body;
   if (!command) {
     return res.status(400).json({ error: 'Command parameter is required' });
@@ -155,7 +156,7 @@ router.post('/api/terminal/execute', async (req, res) => {
 
 
 // 2. Write file
-router.post('/api/terminal/write-file', async (req, res) => {
+router.post('/api/terminal/write-file', verifyToken, async (req, res) => {
   const { filePath, content, approved } = req.body;
   if (!filePath) {
     return res.status(400).json({ error: 'filePath parameter is required' });
@@ -236,7 +237,7 @@ router.post('/api/terminal/write-file', async (req, res) => {
 
 
 // 3. Read file
-router.post('/api/terminal/read-file', (req, res) => {
+router.post('/api/terminal/read-file', verifyToken, (req, res) => {
   const { filePath } = req.body;
   if (!filePath) {
     return res.status(400).json({ error: 'filePath parameter is required' });
@@ -260,7 +261,7 @@ router.post('/api/terminal/read-file', (req, res) => {
 });
 
 // 4. List directory
-router.post('/api/terminal/list-dir', (req, res) => {
+router.post('/api/terminal/list-dir', verifyToken, (req, res) => {
   const { dirPath } = req.body;
   const projectRoot = path.resolve(__dirname, '..');
   const targetDir = dirPath ? (path.isAbsolute(dirPath) ? dirPath : path.resolve(projectRoot, dirPath)) : projectRoot;
@@ -288,7 +289,7 @@ router.post('/api/terminal/list-dir', (req, res) => {
 });
 
 // 5. Delete file or directory
-router.post('/api/terminal/delete', async (req, res) => {
+router.post('/api/terminal/delete', verifyToken, async (req, res) => {
   const { targetPath, approved } = req.body;
   if (!targetPath) {
     return res.status(400).json({ error: 'targetPath parameter is required' });
@@ -368,7 +369,7 @@ router.post('/api/terminal/delete', async (req, res) => {
 
 
 // 6. Move/Rename file or directory
-router.post('/api/terminal/move', (req, res) => {
+router.post('/api/terminal/move', verifyToken, (req, res) => {
   const { sourcePath, destPath } = req.body;
   if (!sourcePath || !destPath) {
     return res.status(400).json({ error: 'sourcePath and destPath parameters are required' });
@@ -399,7 +400,7 @@ router.post('/api/terminal/move', (req, res) => {
 });
 
 // 7. Copy file or directory
-router.post('/api/terminal/copy', (req, res) => {
+router.post('/api/terminal/copy', verifyToken, (req, res) => {
   const { sourcePath, destPath } = req.body;
   if (!sourcePath || !destPath) {
     return res.status(400).json({ error: 'sourcePath and destPath parameters are required' });

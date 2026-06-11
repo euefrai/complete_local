@@ -8,6 +8,7 @@ const { getMemoryGlobal } = require('../lib/uabl_context');
 const { guardrailDecision } = require('../lib/uabl_guardrails');
 const { makeUablReport } = require('../lib/uabl_report');
 const { getBrasiliaISOString, parseBrasiliaDate } = require('../lib/timezone');
+const { verifyToken } = require('../lib/auth');
 
 
 
@@ -232,7 +233,7 @@ setInterval(() => {
 }, 1000);
 
 // scheduler endpoints
-router.post('/api/scheduler/create', (req, res) => {
+router.post('/api/scheduler/create', verifyToken, (req, res) => {
   const { time, type, payload } = req.body;
   if (!time || !type || payload === undefined) {
     return res.status(400).json({ error: 'Parâmetros time, type e payload são obrigatórios.' });
@@ -253,11 +254,11 @@ router.post('/api/scheduler/create', (req, res) => {
   res.json({ success: true, task: newTask });
 });
 
-router.get('/api/scheduler/list', (req, res) => {
+router.get('/api/scheduler/list', verifyToken, (req, res) => {
   res.json({ tasks: getTasks() });
 });
 
-router.delete('/api/scheduler/delete', (req, res) => {
+router.delete('/api/scheduler/delete', verifyToken, (req, res) => {
   const { id } = req.body;
   if (!id) {
     return res.status(400).json({ error: 'Parâmetro id é obrigatório.' });
@@ -274,7 +275,7 @@ router.delete('/api/scheduler/delete', (req, res) => {
   res.json({ success: true, message: 'Tarefa removida com sucesso.' });
 });
 
-router.get('/api/scheduler/alerts', (req, res) => {
+router.get('/api/scheduler/alerts', verifyToken, (req, res) => {
   const alertsToSend = [...pendingAlerts];
   pendingAlerts = []; // clear
   res.json({ alerts: alertsToSend });

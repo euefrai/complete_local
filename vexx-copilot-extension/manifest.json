@@ -54,7 +54,8 @@
         "memory.js",
         "command-palette.js",
         "permissions.js",
-        "visual-audit.js"
+        "visual-audit.js",
+        "social-os.js"
       ],
       "matches": [
         "<all_urls>"

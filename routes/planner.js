@@ -8,6 +8,7 @@ const { getBrasiliaISOString } = require('../lib/timezone');
 const { getMemoryGlobal } = require('../lib/uabl_context');
 const { guardrailDecision } = require('../lib/uabl_guardrails');
 const { makeUablReport } = require('../lib/uabl_report');
+const { verifyToken } = require('../lib/auth');
 
 
 const DATA_DIR = path.resolve(__dirname, '../data');
@@ -43,7 +44,7 @@ function savePlans(plans) {
 }
 
 // 1. Get plans list
-router.get('/api/planner/list', (req, res) => {
+router.get('/api/planner/list', verifyToken, (req, res) => {
   try {
     const plans = loadPlans();
     res.json(plans);
@@ -53,7 +54,7 @@ router.get('/api/planner/list', (req, res) => {
 });
 
 // 2. Create plan
-router.post('/api/planner/create', (req, res) => {
+router.post('/api/planner/create', verifyToken, (req, res) => {
   try {
     const { title, steps } = req.body;
     if (!title || !Array.isArray(steps)) {
@@ -89,7 +90,7 @@ router.post('/api/planner/create', (req, res) => {
 });
 
 // 3. Execute next pending step of a plan
-router.post('/api/planner/execute-step', (req, res) => {
+router.post('/api/planner/execute-step', verifyToken, (req, res) => {
   try {
     const { planId, approved } = req.body;
 
@@ -271,7 +272,7 @@ router.post('/api/planner/execute-step', (req, res) => {
 });
 
 // 4. Delete plan
-router.post('/api/planner/delete', (req, res) => {
+router.post('/api/planner/delete', verifyToken, (req, res) => {
   try {
     const { planId } = req.body;
     if (!planId) {

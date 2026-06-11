@@ -77,6 +77,11 @@ function setupListeners() {
   if (tabArena) tabArena.addEventListener("click", () => switchTab('arena'));
   const tabSettings = document.getElementById("tab-settings");
   if (tabSettings) tabSettings.addEventListener("click", () => switchTab('settings'));
+  const tabSocial = document.getElementById("tab-social");
+  if (tabSocial) tabSocial.addEventListener("click", () => {
+    switchTab('social');
+    if (typeof checkAuth === "function") checkAuth();
+  });
 
   // Botão de recarregar contexto da tela
   const btnRefreshContext = document.getElementById("btn-refresh-context");

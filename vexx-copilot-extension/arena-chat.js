@@ -70,8 +70,21 @@ async function sendArenaMessage() {
       }
     }
 
-    if (pageContextText || auditContext) {
-      systemPrompt += `${pageContextText}${auditContext}`;
+    // Inject Social Memory if available (Camada 6: Social Media OS)
+    let socialMemoryContext = "";
+    if (typeof window !== "undefined" && window.socialMemory) {
+      const sm = window.socialMemory;
+      socialMemoryContext += `\n\n[MEMÓRIA SOCIAL DA CONTA / BRANDING]`;
+      if (sm.niche) socialMemoryContext += `\nNicho: ${sm.niche}`;
+      if (sm.audience) socialMemoryContext += `\nPúblico Alvo: ${sm.audience}`;
+      if (sm.writing_style) socialMemoryContext += `\nEstilo de Escrita: ${sm.writing_style}`;
+      if (sm.past_learnings && sm.past_learnings.length > 0) {
+        socialMemoryContext += `\nAprendizados e Otimizações Anteriores:\n` + sm.past_learnings.map(l => `- ${l}`).join('\n');
+      }
+    }
+
+    if (pageContextText || auditContext || socialMemoryContext) {
+      systemPrompt += `${pageContextText}${auditContext}${socialMemoryContext}`;
     }
 
     systemPrompt += `

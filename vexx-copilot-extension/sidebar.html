@@ -50,6 +50,9 @@
     <button class="tab-btn" id="tab-settings">
       <i class="ti ti-chart-pie"></i> Painel
     </button>
+    <button class="tab-btn" id="tab-social">
+      <i class="ti ti-brand-instagram"></i> Social OS
+    </button>
   </nav>
 
   <!-- MAIN VIEWPORT CONTAINER -->
@@ -251,6 +254,177 @@
       </div>
     </div>
 
+    <!-- TAB 4: SOCIAL OS (INSTAGRAM AGENT) -->
+    <div class="tab-pane" id="pane-social">
+      
+      <!-- Login Section -->
+      <div id="social-login-container" class="content-card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.25);">
+        <div style="text-align: center; margin-bottom: 10px;">
+          <i class="ti ti-lock" style="font-size: 32px; color: var(--color-accent-amethyst);"></i>
+          <h3 style="margin-top: 8px;">Acesso Restrito VEXX OS</h3>
+          <p class="text-secondary" style="font-size: 11px;">Faça login para gerenciar a automação de mídias sociais.</p>
+        </div>
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+          <label class="control-label" for="login-username">Usuário</label>
+          <input type="text" id="login-username" class="form-input" placeholder="admin" value="admin">
+        </div>
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+          <label class="control-label" for="login-password">Senha</label>
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••" value="vexx_admin_123">
+        </div>
+        <button class="btn-primary" id="btn-submit-login" style="margin-top: 10px; height: 36px; justify-content: center; width:100%;">
+          <i class="ti ti-login"></i> Entrar no Sistema
+        </button>
+      </div>
+
+      <!-- Main Dashboard Area (Initially hidden) -->
+      <div id="social-dashboard-container" class="hidden">
+        
+        <!-- Graph API Analytics -->
+        <div class="content-card" style="padding: 12px;">
+          <div class="card-header" style="padding-bottom: 8px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+            <span class="card-title"><i class="ti ti-brand-instagram"></i> Instagram Graph API</span>
+            <span id="instagram-mode-badge" class="badge" style="font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(167, 139, 250, 0.15); color: var(--color-accent-amethyst);">Simulado</span>
+          </div>
+          
+          <!-- Profile Quick Details -->
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 12px; margin-bottom: 12px;">
+            <img id="ig-profile-pic" src="" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--color-accent-amethyst); object-fit: cover;">
+            <div>
+              <h4 id="ig-profile-name" style="margin: 0; font-size: 14px;">Carregando...</h4>
+              <span id="ig-profile-handle" style="font-size: 11px; color: var(--color-text-secondary);">@...</span>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; margin-bottom: 10px;">
+            <div style="background: var(--color-background-primary); padding: 8px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+              <span style="font-size: 10px; color: var(--color-text-secondary); display: block;">Seguidores</span>
+              <strong id="ig-followers" style="font-size: 14px;">0</strong>
+            </div>
+            <div style="background: var(--color-background-primary); padding: 8px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+              <span style="font-size: 10px; color: var(--color-text-secondary); display: block;">Alcance</span>
+              <strong id="ig-reach" style="font-size: 14px;">0</strong>
+            </div>
+            <div style="background: var(--color-background-primary); padding: 8px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+              <span style="font-size: 10px; color: var(--color-text-secondary); display: block;">Engajamento</span>
+              <strong id="ig-engagement" style="font-size: 14px;">0%</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Memory (RAG Config) -->
+        <div class="content-card" style="margin-top: 1rem; padding: 12px;">
+          <div class="card-header">
+            <span class="card-title"><i class="ti ti-brain"></i> Social Memory</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 10px; font-weight: 500; color: var(--color-text-secondary);">Nicho da Conta</label>
+              <input type="text" id="sm-niche" class="form-input" placeholder="Ex: IA e Automações">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 10px; font-weight: 500; color: var(--color-text-secondary);">Público Alvo</label>
+              <input type="text" id="sm-audience" class="form-input" placeholder="Ex: Empreendedores e Devs">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 10px; font-weight: 500; color: var(--color-text-secondary);">Estilo de Escrita</label>
+              <textarea id="sm-style" class="form-textarea" rows="2" placeholder="Ex: Direto, premium, no-bullshit"></textarea>
+            </div>
+            <button class="btn-secondary" id="btn-save-social-memory" style="width: 100%; justify-content: center; height: 28px; font-size: 11px;">
+              <i class="ti ti-device-floppy"></i> Atualizar Memória
+            </button>
+          </div>
+        </div>
+
+        <!-- Content Generator Agent -->
+        <div class="content-card" style="margin-top: 1rem; padding: 12px;">
+          <div class="card-header">
+            <span class="card-title"><i class="ti ti-edit"></i> Content Creator Agent</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <div style="display: flex; gap: 6px;">
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 10px; color: var(--color-text-secondary);">Formato</label>
+                <select id="gen-format" class="form-select">
+                  <option value="Reels">Reels (Roteiro)</option>
+                  <option value="Stories">Stories (Adesivos)</option>
+                  <option value="Carrossel">Carrossel (Capítulos)</option>
+                </select>
+              </div>
+              <div style="flex: 2; display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 10px; color: var(--color-text-secondary);">Tema principal</label>
+                <input type="text" id="gen-theme" class="form-input" placeholder="Ex: 3 ferramentas de IA úteis">
+              </div>
+            </div>
+            <button class="btn-primary" id="btn-generate-content" style="width: 100%; justify-content: center; height: 32px; font-size: 12px;">
+              <i class="ti ti-wand"></i> Gerar Post & Roteiro
+            </button>
+            
+            <div id="gen-output-container" class="hidden" style="margin-top: 8px; background: rgba(0,0,0,0.15); padding: 8px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary);">
+              <span style="font-size: 10px; color: var(--color-text-secondary); display: block; margin-bottom: 4px; font-weight: 500;">Sugestão Gerada:</span>
+              <div id="gen-output" style="font-size: 11px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; line-height: 1.4; color: var(--color-text-secondary); margin-bottom: 8px;"></div>
+              
+              <div style="display: flex; gap: 6px;">
+                <button class="btn-primary" id="btn-publish-now" style="flex: 1; height: 26px; font-size: 11px; justify-content: center;">
+                  <i class="ti ti-send"></i> Publicar
+                </button>
+                <button class="btn-secondary" id="btn-schedule-post" style="flex: 1; height: 26px; font-size: 11px; justify-content: center;">
+                  <i class="ti ti-calendar-time"></i> Agendar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Viral Analyzer -->
+        <div class="content-card" style="margin-top: 1rem; padding: 12px;">
+          <div class="card-header">
+            <span class="card-title"><i class="ti ti-bolt"></i> Viral Analyzer (0-100)</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <textarea id="viral-input-text" class="form-textarea" rows="3" placeholder="Cole sua legenda ou copy aqui para pontuar..."></textarea>
+            <button class="btn-secondary" id="btn-analyze-viral" style="width: 100%; justify-content: center; height: 28px; font-size: 11px;">
+              <i class="ti ti-chart-bar"></i> Analisar Taxa Viral
+            </button>
+
+            <!-- Score Result -->
+            <div id="viral-result-container" class="hidden" style="margin-top: 8px; padding: 8px; background: rgba(167, 139, 250, 0.05); border-radius: 6px; border: 0.5px solid rgba(167, 139, 250, 0.15);">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <strong style="font-size: 12px; color: var(--color-accent-amethyst);">Pontuação Viral:</strong>
+                <span id="viral-total-score" style="font-size: 16px; font-weight: bold; color: var(--color-accent-amethyst);">0/100</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: var(--color-text-secondary);" id="viral-pills-container">
+                <!-- Breakdown will be rendered dynamically -->
+              </div>
+              <div style="font-size: 10px; margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--color-border-tertiary); color: var(--color-text-secondary);" id="viral-feedback"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Self Improvement & Trends -->
+        <div class="content-card" style="margin-top: 1rem; padding: 12px;">
+          <div class="card-header">
+            <span class="card-title"><i class="ti ti-trending-up"></i> Trends & Auto-Melhoria</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <div style="display: flex; gap: 6px;">
+              <button class="btn-secondary" id="btn-fetch-trends" style="flex: 1; height: 28px; font-size: 11px; justify-content: center;">
+                <i class="ti ti-flame"></i> Buscar Trends
+              </button>
+              <button class="btn-secondary" id="btn-trigger-improvement" style="flex: 1; height: 28px; font-size: 11px; justify-content: center;">
+                <i class="ti ti-history"></i> Auto-Melhoria
+              </button>
+            </div>
+            
+            <div id="trends-output" class="hidden" style="background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 6px; padding: 8px; font-size: 11px; color: var(--color-text-secondary); max-height: 150px; overflow-y: auto;">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- TAB 3: ADJUSTS AND API USAGE -->
     <div class="tab-pane" id="pane-settings">
       
@@ -394,6 +568,7 @@
   <script src="command-palette.js"></script>
   <script src="permissions.js"></script>
   <script src="visual-audit.js"></script>
+  <script src="social-os.js"></script>
   <script src="sidebar.js"></script>
 </body>
 </html>

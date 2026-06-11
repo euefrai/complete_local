@@ -12,11 +12,22 @@ process.on("unhandledRejection", (reason, promise) => {
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Rate Limiting Config
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // limite de 100 requisições por IP a cada janela
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas requisições originadas deste IP. Por favor, tente novamente após 15 minutos.' }
+});
+
 app.use(cors());
+app.use('/api/', apiLimiter);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -55,6 +66,9 @@ app.use(require('./routes/insights'));
 app.use(require('./routes/plugins'));
 app.use(require('./routes/skills_runtime'));
 app.use(require('./routes/scheduler_skills_bridge'));
+app.use(require('./routes/auth'));
+app.use(require('./routes/social_api'));
+app.use(require('./routes/social_agents'));
 
 
 
