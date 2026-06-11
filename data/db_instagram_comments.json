@@ -1,0 +1,64 @@
+{
+  "media_post_1": [
+    {
+      "id": "comm_1_1",
+      "text": "Excelente post, o futuro já chegou mesmo!",
+      "username": "jfelixns",
+      "timestamp": "2026-06-08T15:00:00Z",
+      "like_count": 12
+    },
+    {
+      "id": "comm_1_2",
+      "text": "Estou ansioso para ver isso rodando",
+      "username": "lucas_dev",
+      "timestamp": "2026-06-08T15:30:00Z",
+      "like_count": 4
+    },
+    {
+      "id": "comm_1_3",
+      "text": "Como faço para testar esse copiloto?",
+      "username": "gaby_mkt",
+      "timestamp": "2026-06-08T16:15:00Z",
+      "like_count": 0
+    }
+  ],
+  "media_post_2": [
+    {
+      "id": "comm_2_1",
+      "text": "Incrível ver Computer Use se popularizando desse jeito!",
+      "username": "agent_developer",
+      "timestamp": "2026-06-10T18:05:00Z",
+      "like_count": 24
+    },
+    {
+      "id": "comm_2_2",
+      "text": "Isso funciona em contas comerciais grandes?",
+      "username": "brand_strategy",
+      "timestamp": "2026-06-10T18:45:00Z",
+      "like_count": 8
+    },
+    {
+      "id": "comm_2_3",
+      "text": "Que doidera esse clique automático na tela",
+      "username": "mario_ux",
+      "timestamp": "2026-06-10T19:00:00Z",
+      "like_count": 1
+    }
+  ],
+  "media_post_3": [
+    {
+      "id": "comm_3_1",
+      "text": "Combinação de roxo e preto ficou sensacional!",
+      "username": "design_master",
+      "timestamp": "2026-06-11T10:15:00Z",
+      "like_count": 5
+    },
+    {
+      "id": "comm_3_2",
+      "text": "Interface linda, muito limpa",
+      "username": "carla_ux",
+      "timestamp": "2026-06-11T10:40:00Z",
+      "like_count": 2
+    }
+  ]
+}

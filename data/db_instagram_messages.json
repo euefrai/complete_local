@@ -1,0 +1,46 @@
+[
+  {
+    "id": "chat_jfelixns",
+    "username": "jfelixns",
+    "name": "João Felix",
+    "messages": [
+      {
+        "sender": "jfelixns",
+        "text": "Opa Efraim, blz? Vi o vídeo do robô operando o Insta, muito massa!",
+        "timestamp": "2026-06-10T19:30:00Z"
+      },
+      {
+        "sender": "euefrai",
+        "text": "Fala João! Beleza? Que bom que gostou, estamos integrando com a Graph API agora.",
+        "timestamp": "2026-06-10T19:35:00Z"
+      },
+      {
+        "sender": "jfelixns",
+        "text": "Show! Tem como fazer ele responder comentários de posts específicos de forma automática?",
+        "timestamp": "2026-06-10T19:40:00Z"
+      }
+    ]
+  },
+  {
+    "id": "chat_brand_strategy",
+    "username": "brand_strategy",
+    "name": "Carol - Branding",
+    "messages": [
+      {
+        "sender": "brand_strategy",
+        "text": "Olá! Vocês fazem integração para automação de DMs?",
+        "timestamp": "2026-06-11T09:12:00Z"
+      },
+      {
+        "sender": "euefrai",
+        "text": "Olá Carol! Sim, conseguimos integrar tanto via API oficial quanto via RPA visual.",
+        "timestamp": "2026-06-11T09:30:00Z"
+      },
+      {
+        "sender": "brand_strategy",
+        "text": "Perfeito! Gostaria de saber os valores da mensalidade.",
+        "timestamp": "2026-06-11T09:35:00Z"
+      }
+    ]
+  }
+]

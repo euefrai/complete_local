@@ -1,0 +1,50 @@
+[
+  {
+    "id": "media_post_1",
+    "media_type": "CAROUSEL_ALBUM",
+    "media_url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600",
+    "permalink": "https://instagram.com/p/media_post_1",
+    "caption": "O Futuro das IAs Autônomas e Sistemas Operacionais de Agentes. Hoje estamos lançando o VEXX OS! #ia #agentes #startup #tecnologia #programmer",
+    "like_count": 2530,
+    "comments_count": 42,
+    "timestamp": "2026-06-08T14:30:00Z",
+    "insights": {
+      "reach": 12400,
+      "impressions": 16800,
+      "engagement": 2572,
+      "saved": 412
+    }
+  },
+  {
+    "id": "media_post_2",
+    "media_type": "VIDEO",
+    "media_url": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600",
+    "permalink": "https://instagram.com/p/media_post_2",
+    "caption": "Demonstração prática de Computer Use e RPA rodando no Instagram. O agente vê, planeja e executa! 🤯🚀 #rpa #computeruse #ai #agent #coding",
+    "like_count": 4120,
+    "comments_count": 89,
+    "timestamp": "2026-06-10T18:00:00Z",
+    "insights": {
+      "reach": 24500,
+      "impressions": 32100,
+      "engagement": 4209,
+      "saved": 980
+    }
+  },
+  {
+    "id": "media_post_3",
+    "media_type": "IMAGE",
+    "media_url": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&q=80&w=600",
+    "permalink": "https://instagram.com/p/media_post_3",
+    "caption": "Design premium de painéis de controle de IA. Minimalismo e funcionalidade andam juntos. O que achou dessa interface? #ui #ux #design #ai #dashboard",
+    "like_count": 890,
+    "comments_count": 14,
+    "timestamp": "2026-06-11T10:00:00Z",
+    "insights": {
+      "reach": 4500,
+      "impressions": 5800,
+      "engagement": 904,
+      "saved": 110
+    }
+  }
+]
