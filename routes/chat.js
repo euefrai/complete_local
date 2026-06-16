@@ -105,7 +105,8 @@ router.post('/api/chat', async (req, res) => {
     temperature,
     max_tokens,
     apiKey,
-    baseUrl: baseUrlOverride
+    baseUrl: baseUrlOverride,
+    response_format
   } = req.body || {};
 
   const finalModel = pickDefaultModel(model);
@@ -147,24 +148,65 @@ router.post('/api/chat', async (req, res) => {
       : [{ role: 'system', content: uablSystem }, ...baseMessages];
   }
 
-  const payload = {
-    model: finalModel,
-    messages: finalMessages,
-    temperature: finalTemperature,
-    max_tokens: max_tokens ?? process.env.DEFAULT_MAX_TOKENS ?? 2048
-  };
+  const isClaude = provider && provider.toLowerCase().trim().startsWith('claude');
 
-  // OpenAI-compatible endpoint
-  const url = `${baseUrl.replace(/\/+$/,'')}/v1/chat/completions`;
+  let url;
+  let headers;
+  let bodyPayload;
+
+  if (isClaude) {
+    url = 'https://api.anthropic.com/v1/messages';
+    headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': finalApiKey,
+      'anthropic-version': '2023-06-01'
+    };
+
+    const systemMessage = finalMessages.find(m => m && m.role === 'system');
+    const systemPrompt = systemMessage ? (typeof systemMessage.content === 'string' ? systemMessage.content : '') : '';
+
+    const anthropicMessages = finalMessages.filter(m => m && m.role !== 'system').map(m => {
+      let contentStr = '';
+      if (typeof m.content === 'string') {
+        contentStr = m.content;
+      } else if (Array.isArray(m.content)) {
+        contentStr = m.content.filter(p => p.type === 'text').map(p => p.text).join('\n');
+      } else {
+        contentStr = String(m.content || '');
+      }
+      return { role: m.role, content: contentStr };
+    });
+
+    bodyPayload = {
+      model: finalModel || 'claude-3-5-sonnet-20241022',
+      messages: anthropicMessages,
+      system: systemPrompt,
+      max_tokens: max_tokens ?? process.env.DEFAULT_MAX_TOKENS ?? 2048,
+      temperature: finalTemperature
+    };
+  } else {
+    // OpenAI-compatible endpoint
+    url = `${baseUrl.replace(/\/+$/,'')}/v1/chat/completions`;
+    headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${finalApiKey}`
+    };
+    bodyPayload = {
+      model: finalModel,
+      messages: finalMessages,
+      temperature: finalTemperature,
+      max_tokens: max_tokens ?? process.env.DEFAULT_MAX_TOKENS ?? 2048
+    };
+    if (response_format) {
+      bodyPayload.response_format = response_format;
+    }
+  }
 
   try {
     const r = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${finalApiKey}`
-      },
-      body: JSON.stringify(payload)
+      headers: headers,
+      body: JSON.stringify(bodyPayload)
     });
 
     const txt = await r.text();
@@ -178,8 +220,35 @@ router.post('/api/chat', async (req, res) => {
       });
     }
 
+    let finalResponse = data;
+    if (isClaude) {
+      try {
+        const text = data.content && data.content[0] && data.content[0].text ? data.content[0].text : '';
+        finalResponse = {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: text
+              }
+            }
+          ],
+          usage: data.usage ? {
+            prompt_tokens: data.usage.input_tokens,
+            completion_tokens: data.usage.output_tokens,
+            total_tokens: data.usage.input_tokens + data.usage.output_tokens
+          } : undefined
+        };
+      } catch (e) {
+        return res.status(502).json({
+          error: 'Failed to parse Anthropic response structure',
+          details: data
+        });
+      }
+    }
+
     const memory = getMemoryGlobal();
-    data.uabl = {
+    finalResponse.uabl = {
       memoryUsed: {
         preferencias_usuario_md: !!memory?.preferencias,
         audit_log: !!memory?.auditTail,
@@ -188,7 +257,7 @@ router.post('/api/chat', async (req, res) => {
       }
     };
 
-    res.json(data);
+    res.json(finalResponse);
   } catch (e) {
     res.status(500).json({
       error: 'chat falhou',

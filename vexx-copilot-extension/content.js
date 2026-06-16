@@ -7,65 +7,189 @@ let lastScrapedData = null;
 let messageObserver = null;
 let messageListenersSetup = false;
 
+let currentMode = "sidebar";
+let isDragging = false;
+let collapseTimer = null;
+
 // Inicializa a extensão na aba
 function init() {
   if (document.getElementById("vexx-copilot-trigger")) return;
 
   createFloatingTrigger();
-  createSidebar();
   setupMessageListeners();
   setupObserver();
+  setupHotkeyListeners();
+  
+  // Inicialização de observadores e hooks avançados
+  setupErrorObserver();
+  setupSessionReplay();
+  setupRealTimeChangeDetection();
 }
 
+// Cria o botão flutuante para abrir/fechar a barra lateral
 // Cria o botão flutuante para abrir/fechar a barra lateral
 function createFloatingTrigger() {
   const trigger = document.createElement("div");
   trigger.id = "vexx-copilot-trigger";
+  
+  // Estilo premium de ponto circular minimalista
   trigger.style.position = "fixed";
   trigger.style.bottom = "20px";
   trigger.style.right = "20px";
-  trigger.style.width = "48px";
-  trigger.style.height = "48px";
+  trigger.style.width = "20px";
+  trigger.style.height = "20px";
   trigger.style.borderRadius = "50%";
-  trigger.style.backgroundColor = "#a78bfa"; // Ametista accent
-  trigger.style.color = "#1b1b1b"; // Charcoal contrast
+  trigger.style.backgroundColor = "rgba(30, 30, 30, 0.85)";
+  trigger.style.backdropFilter = "blur(12px)";
+  trigger.style.webkitBackdropFilter = "blur(12px)";
+  trigger.style.color = "#ffffff";
   trigger.style.display = "flex";
   trigger.style.alignItems = "center";
   trigger.style.justifyContent = "center";
   trigger.style.cursor = "pointer";
   trigger.style.zIndex = "2147483647";
-  trigger.style.boxShadow = "0 4px 16px rgba(0,0,0,0.4)";
-  trigger.style.border = "1px solid rgba(255,255,255,0.1)";
-  trigger.style.transition = "transform 0.2s ease, background-color 0.2s ease";
-  trigger.title = "Vexx AI Copilot";
+  trigger.style.boxShadow = "0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)";
+  trigger.style.border = "1.5px solid rgba(167, 139, 250, 0.7)";
+  trigger.style.transition = "transform 0.2s, border-color 0.2s, background-color 0.2s";
+  trigger.style.overflow = "hidden";
+  trigger.style.boxSizing = "border-box";
+  trigger.title = "Vexx AI Copilot (Segure para arrastar)";
 
-  // Ícone SVG elegante da VEXX (duplo chevron indicando expansão)
   trigger.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="11 17 6 12 11 7"></polyline>
-      <polyline points="18 17 13 12 18 7"></polyline>
-    </svg>
+    <div style="width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 8px #a78bfa;"></div>
   `;
 
-  trigger.addEventListener("mouseenter", () => {
-    trigger.style.transform = "scale(1.08)";
-    trigger.style.backgroundColor = "#b59dfb";
+  // Carrega posição persistente (específica do site ou global)
+  const siteKey = `vexx_pos_${window.location.hostname}`;
+  chrome.storage.local.get([siteKey, "vexx_pos_global", "vexx_pos_user_set"], (res) => {
+    if (res.vexx_pos_user_set && (res[siteKey] || res["vexx_pos_global"])) {
+      const pos = res[siteKey] || res["vexx_pos_global"];
+      const x = Math.max(10, Math.min(pos.x, window.innerWidth - 30));
+      const y = Math.max(10, Math.min(pos.y, window.innerHeight - 30));
+      trigger.style.left = `${x}px`;
+      trigger.style.top = `${y}px`;
+      trigger.style.bottom = "auto";
+      trigger.style.right = "auto";
+    } else {
+      // Se não for posicionado manualmente pelo usuário, roda desvio de colisões
+      setTimeout(() => detectCollisionsAndReposition(trigger), 300);
+    }
   });
 
+  // Efeitos de Hover
+  trigger.addEventListener("mouseenter", () => {
+    trigger.style.transform = "scale(1.15)";
+    trigger.style.borderColor = "rgba(167, 139, 250, 1)";
+  });
   trigger.addEventListener("mouseleave", () => {
     trigger.style.transform = "scale(1)";
-    trigger.style.backgroundColor = "#a78bfa";
+    trigger.style.borderColor = "rgba(167, 139, 250, 0.7)";
   });
+  
+  // Drag and drop implementation with long-press threshold (250ms)
+  let dragTimeout = null;
+  let isHoldActive = false;
+  let startX = 0, startY = 0;
+  let triggerLeft = 0, triggerTop = 0;
+  let hasMoved = false;
 
-  trigger.addEventListener("click", () => {
-    toggleSidebar();
-  });
+  const onMouseMove = (e) => {
+    if (!isHoldActive) return;
+    hasMoved = true;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    const deltaX = clientX - startX;
+    const deltaY = clientY - startY;
+
+    let newLeft = triggerLeft + deltaX;
+    let newTop = triggerTop + deltaY;
+
+    // Limites da viewport
+    newLeft = Math.max(5, Math.min(newLeft, window.innerWidth - trigger.offsetWidth - 5));
+    newTop = Math.max(5, Math.min(newTop, window.innerHeight - trigger.offsetHeight - 5));
+
+    trigger.style.left = `${newLeft}px`;
+    trigger.style.top = `${newTop}px`;
+  };
+
+  const onMouseUp = () => {
+    clearTimeout(dragTimeout);
+    
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+    document.removeEventListener("touchmove", onMouseMove);
+    document.removeEventListener("touchend", onMouseUp);
+
+    trigger.style.cursor = "pointer";
+
+    if (isHoldActive) {
+      if (hasMoved) {
+        // Salva coordenadas manualmente definidas
+        const left = parseFloat(trigger.style.left);
+        const top = parseFloat(trigger.style.top);
+        const siteKey = `vexx_pos_${window.location.hostname}`;
+        
+        chrome.storage.local.set({
+          [siteKey]: { x: left, y: top },
+          "vexx_pos_global": { x: left, y: top },
+          "vexx_pos_user_set": true
+        });
+      }
+      setTimeout(() => { 
+        isDragging = false; 
+        isHoldActive = false;
+      }, 80);
+    } else {
+      isDragging = false;
+      toggleSidebar();
+    }
+  };
+
+  const onMouseDown = (e) => {
+    if (e.button && e.button !== 0) return; // Apenas botão esquerdo
+    
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    startX = clientX;
+    startY = clientY;
+    hasMoved = false;
+    isHoldActive = false;
+
+    const rect = trigger.getBoundingClientRect();
+    triggerLeft = rect.left;
+    triggerTop = rect.top;
+
+    // Inicia temporizador para ativação do arrasto (segurar por 250ms)
+    dragTimeout = setTimeout(() => {
+      isHoldActive = true;
+      isDragging = true;
+      trigger.style.cursor = "grabbing";
+      
+      trigger.style.left = `${triggerLeft}px`;
+      trigger.style.top = `${triggerTop}px`;
+      trigger.style.bottom = "auto";
+      trigger.style.right = "auto";
+      trigger.style.transition = "none";
+    }, 250);
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("touchmove", onMouseMove, { passive: false });
+    document.addEventListener("touchend", onMouseUp);
+  };
+
+  trigger.addEventListener("mousedown", onMouseDown);
+  trigger.addEventListener("touchstart", onMouseDown, { passive: false });
 
   document.body.appendChild(trigger);
 }
 
-// Cria a casca da barra lateral (iframe)
+// Cria a casca da barra lateral (iframe) - Chamado dinamicamente no primeiro clique/atalho
 function createSidebar() {
+  if (sidebarContainer) return;
+
   sidebarContainer = document.createElement("div");
   sidebarContainer.id = "vexx-sidebar-container";
   sidebarContainer.style.position = "fixed";
@@ -75,7 +199,7 @@ function createSidebar() {
   sidebarContainer.style.height = "100vh";
   sidebarContainer.style.zIndex = "2147483646";
   sidebarContainer.style.boxShadow = "-8px 0 24px rgba(0,0,0,0.3)";
-  sidebarContainer.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+  sidebarContainer.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s, height 0.3s, opacity 0.3s, border-radius 0.3s";
   sidebarContainer.style.transform = "translateX(100%)"; // Oculto por padrão
   sidebarContainer.style.backgroundColor = "#1b1b1b";
 
@@ -89,43 +213,201 @@ function createSidebar() {
 
   sidebarContainer.appendChild(iframe);
   document.body.appendChild(sidebarContainer);
+
+  // Recupera e aplica o modo de exibição salvo
+  chrome.storage.local.get("vexx_copilot_view_mode", (res) => {
+    currentMode = res.vexx_copilot_view_mode || "sidebar";
+    applyViewMode(currentMode);
+  });
 }
 
 // Alterna o estado de exibição da barra lateral
 function toggleSidebar() {
+  if (isDragging) return;
+
   sidebarOpen = !sidebarOpen;
-  const trigger = document.getElementById("vexx-copilot-trigger");
+
+  // Lazy Loading: cria a barra lateral na primeira abertura
+  if (!sidebarContainer) {
+    createSidebar();
+  }
+
+  applyViewMode(currentMode);
 
   if (sidebarOpen) {
-    sidebarContainer.style.transform = "translateX(0)";
-    if (trigger) {
-      trigger.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="13 17 18 12 13 7"></polyline>
-          <polyline points="6 17 11 12 6 7"></polyline>
-        </svg>
-      `;
-    }
-    // Ajusta o layout das páginas para não quebrar conteúdo (opcional, só WhatsApp por ser largo)
-    if (window.location.hostname.includes("whatsapp.com")) {
-      document.body.style.width = "calc(100% - 380px)";
-      document.body.style.transition = "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
-    }
     // Envia scrape imediato ao abrir
-    setTimeout(sendScrapedDataToSidebar, 300);
-  } else {
-    sidebarContainer.style.transform = "translateX(100%)";
-    if (trigger) {
-      trigger.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="11 17 6 12 11 7"></polyline>
-          <polyline points="18 17 13 12 18 7"></polyline>
-        </svg>
-      `;
+    setTimeout(sendScrapedDataToSidebar, 350);
+  }
+}
+
+// Ajusta o estilo do contêiner de acordo com o modo ativo
+function applyViewMode(mode) {
+  if (!sidebarContainer) return;
+
+  // Reseta propriedades básicas para transição limpa
+  sidebarContainer.style.borderRadius = "0px";
+  sidebarContainer.style.left = "auto";
+  sidebarContainer.style.bottom = "auto";
+  sidebarContainer.style.top = "auto";
+  sidebarContainer.style.right = "auto";
+  sidebarContainer.style.transform = "none";
+  sidebarContainer.style.opacity = "1";
+  sidebarContainer.style.maxWidth = "none";
+  sidebarContainer.style.maxHeight = "none";
+  sidebarContainer.style.pointerEvents = "auto";
+
+  if (mode === "sidebar") {
+    sidebarContainer.style.top = "0";
+    sidebarContainer.style.right = "0";
+    sidebarContainer.style.width = "380px";
+    sidebarContainer.style.height = "100vh";
+    sidebarContainer.style.boxShadow = "-8px 0 24px rgba(0,0,0,0.3)";
+    sidebarContainer.style.border = "none";
+    if (sidebarOpen) {
+      sidebarContainer.style.transform = "translateX(0)";
+      if (window.location.hostname.includes("whatsapp.com")) {
+        document.body.style.width = "calc(100% - 380px)";
+      }
+    } else {
+      sidebarContainer.style.transform = "translateX(100%)";
+      if (window.location.hostname.includes("whatsapp.com")) {
+        document.body.style.width = "100%";
+      }
     }
+  } 
+  else if (mode === "overlay") {
     if (window.location.hostname.includes("whatsapp.com")) {
       document.body.style.width = "100%";
     }
+    sidebarContainer.style.top = "50%";
+    sidebarContainer.style.left = "50%";
+    sidebarContainer.style.width = "640px";
+    sidebarContainer.style.maxWidth = "90vw";
+    sidebarContainer.style.height = "75vh";
+    sidebarContainer.style.maxHeight = "700px";
+    sidebarContainer.style.borderRadius = "12px";
+    sidebarContainer.style.boxShadow = "0 12px 48px rgba(0,0,0,0.5)";
+    sidebarContainer.style.border = "1px solid rgba(255,255,255,0.1)";
+    if (sidebarOpen) {
+      sidebarContainer.style.transform = "translate(-50%, -50%) scale(1)";
+      sidebarContainer.style.opacity = "1";
+    } else {
+      sidebarContainer.style.transform = "translate(-50%, -50%) scale(0.95)";
+      sidebarContainer.style.opacity = "0";
+      sidebarContainer.style.pointerEvents = "none";
+    }
+  } 
+  else if (mode === "mini") {
+    if (window.location.hostname.includes("whatsapp.com")) {
+      document.body.style.width = "100%";
+    }
+    sidebarContainer.style.bottom = "80px";
+    sidebarContainer.style.right = "20px";
+    sidebarContainer.style.width = "340px";
+    sidebarContainer.style.height = "500px";
+    sidebarContainer.style.maxHeight = "80vh";
+    sidebarContainer.style.borderRadius = "12px";
+    sidebarContainer.style.boxShadow = "0 8px 32px rgba(0,0,0,0.4)";
+    sidebarContainer.style.border = "1px solid rgba(255,255,255,0.1)";
+    sidebarContainer.style.transformOrigin = "bottom right";
+    if (sidebarOpen) {
+      sidebarContainer.style.transform = "scale(1)";
+      sidebarContainer.style.opacity = "1";
+    } else {
+      sidebarContainer.style.transform = "scale(0.8)";
+      sidebarContainer.style.opacity = "0";
+      sidebarContainer.style.pointerEvents = "none";
+    }
+  } 
+  else if (mode === "full") {
+    if (window.location.hostname.includes("whatsapp.com")) {
+      document.body.style.width = "100%";
+    }
+    sidebarContainer.style.top = "0";
+    sidebarContainer.style.left = "0";
+    sidebarContainer.style.width = "100vw";
+    sidebarContainer.style.height = "100vh";
+    sidebarContainer.style.boxShadow = "none";
+    sidebarContainer.style.border = "none";
+    if (sidebarOpen) {
+      sidebarContainer.style.transform = "scale(1)";
+      sidebarContainer.style.opacity = "1";
+    } else {
+      sidebarContainer.style.transform = "scale(0.98)";
+      sidebarContainer.style.opacity = "0";
+      sidebarContainer.style.pointerEvents = "none";
+    }
+  }
+}
+
+// Motor de detecção de colisões com widgets flutuantes de terceiros
+function detectCollisionsAndReposition(trigger) {
+  if (sidebarOpen) return;
+  const defaultRect = trigger.getBoundingClientRect();
+  const width = defaultRect.width || 96;
+  const height = defaultRect.height || 42;
+
+  // Busca elementos candidatos à colisão no canto inferior direito
+  const candidates = document.querySelectorAll(
+    "iframe, div, button, a, #intercom-container, [id*='chat'], [class*='chat'], [class*='widget'], [id*='widget'], [id*='whatsapp'], [class*='whatsapp'], [class*='fb-customer-chat']"
+  );
+
+  let collisionDetected = false;
+  let shiftUp = 0;
+
+  candidates.forEach(el => {
+    if (el === trigger || (sidebarContainer && el === sidebarContainer)) return;
+    
+    try {
+      const style = window.getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) === 0) return;
+      if (style.position !== 'fixed' && style.position !== 'absolute') return;
+
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return;
+
+      // Verifica se o widget está no quadrante inferior direito (onde o botão por padrão é inserido)
+      const inBottomRightCorner = r.right > (window.innerWidth - 160) && r.bottom > (window.innerHeight - 160);
+      
+      if (inBottomRightCorner) {
+        const overlapTop = window.innerHeight - r.top;
+        if (overlapTop > shiftUp) {
+          shiftUp = overlapTop;
+          collisionDetected = true;
+        }
+      }
+    } catch (e) {}
+  });
+
+  if (collisionDetected) {
+    const newBottom = shiftUp + 15;
+    trigger.style.bottom = `${newBottom}px`;
+    trigger.style.right = "20px";
+    trigger.style.top = "auto";
+    trigger.style.left = "auto";
+  }
+}
+
+// Atalhos globais para abrir/fechar a barra instantaneamente (Alt + Espaço ou Ctrl + Shift + V)
+function setupHotkeyListeners() {
+  window.addEventListener("keydown", (e) => {
+    const isAltSpace = e.altKey && e.code === "Space";
+    const isCtrlShiftV = e.ctrlKey && e.shiftKey && e.code === "KeyV";
+    
+    if (isAltSpace || isCtrlShiftV) {
+      e.preventDefault();
+      toggleSidebar();
+    }
+  });
+
+  // Ouvinte para mensagens de atalhos globais nativos vindas do Service Worker
+  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      if (request.action === "TOGGLE_SIDEBAR_FROM_HOTKEY") {
+        toggleSidebar();
+        sendResponse({ success: true });
+      }
+    });
   }
 }
 
@@ -145,6 +427,9 @@ function setupMessageListeners() {
         insertTextIntoActiveInput(text);
       } else if (action === "CLOSE_SIDEBAR") {
         if (sidebarOpen) toggleSidebar();
+      } else if (action === "CHANGE_VIEW_MODE") {
+        currentMode = event.data.payload.mode;
+        applyViewMode(currentMode);
       } else if (action === "AUTOSCROLL_SCRAPE") {
         if (typeof ContextEngine !== "undefined") {
           const container = ContextEngine.findInstagramMessageContainer();
@@ -797,6 +1082,37 @@ function insertTextIntoActiveInput(text) {
       }
     }
   }
+  
+  else {
+    // Fallback para qualquer outro site (Universal AI OS)
+    let inputEl = document.activeElement;
+    const isInput = inputEl && (
+      inputEl.tagName === "INPUT" || 
+      inputEl.tagName === "TEXTAREA" || 
+      inputEl.getAttribute("contenteditable") === "true" ||
+      inputEl.getAttribute("role") === "textbox"
+    );
+    
+    if (!isInput) {
+      // Procura pelo primeiro input, textarea ou contenteditable visível na viewport
+      const candidates = document.querySelectorAll("textarea, input[type='text'], [contenteditable='true'], [role='textbox']");
+      for (const el of candidates) {
+        if (el.closest("#vexx-sidebar-container, #vexx-copilot-trigger")) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          inputEl = el;
+          break;
+        }
+      }
+    }
+
+    if (inputEl) {
+      inputEl.focus();
+      setReactValue(inputEl, text);
+      flashInsertFeedback(inputEl);
+      success = true;
+    }
+  }
 
   // Envia feedback de sucesso/falha para a sidebar
   try {
@@ -1095,3 +1411,236 @@ class AutomationEngine {
   }
 }
 
+function setupErrorObserver() {
+  window.addEventListener("error", (event) => {
+    if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.sendMessage) return;
+    try {
+      chrome.runtime.sendMessage({
+        action: "LOG_ERROR",
+        payload: {
+          message: event.message || "Erro JavaScript não capturado",
+          stack: event.error ? event.error.stack : "",
+          url: window.location.href,
+          type: "JavaScript Error"
+        }
+      }).catch(() => {});
+    } catch(e){}
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.sendMessage) return;
+    try {
+      const reason = event.reason;
+      chrome.runtime.sendMessage({
+        action: "LOG_ERROR",
+        payload: {
+          message: reason ? (reason.message || String(reason)) : "Rejeição de promessa não tratada",
+          stack: reason && reason.stack ? reason.stack : "",
+          url: window.location.href,
+          type: "Promise Rejection"
+        }
+      }).catch(() => {});
+    } catch(e){}
+  });
+
+  // Intercepta console.error
+  const originalConsoleError = console.error;
+  console.error = function (...args) {
+    originalConsoleError.apply(console, args);
+    if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.sendMessage) return;
+    try {
+      const msg = args.map(arg => typeof arg === "object" ? JSON.stringify(arg) : String(arg)).join(" ");
+      if (msg.includes("Extension context invalidated") || msg.includes("chrome-extension://") || msg.includes("content.js")) return;
+
+      chrome.runtime.sendMessage({
+        action: "LOG_ERROR",
+        payload: {
+          message: msg.substring(0, 300),
+          stack: new Error().stack || "",
+          url: window.location.href,
+          type: "Console Error"
+        }
+      }).catch(() => {});
+    } catch(e){}
+  };
+
+  // Intercepta erros de fetch
+  const originalFetch = window.fetch;
+  window.fetch = function (...args) {
+    return originalFetch.apply(this, args)
+      .then(response => {
+        if (!response.ok && typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
+          try {
+            chrome.runtime.sendMessage({
+              action: "LOG_ERROR",
+              payload: {
+                message: `Erro de API HTTP ${response.status} em ${args[0]}`,
+                stack: `Status: ${response.status} ${response.statusText}`,
+                url: window.location.href,
+                type: "Network API Error"
+              }
+            }).catch(() => {});
+          } catch(e){}
+        }
+        return response;
+      })
+      .catch(error => {
+        if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
+          try {
+            chrome.runtime.sendMessage({
+              action: "LOG_ERROR",
+              payload: {
+                message: `Falha na conexão de rede para ${args[0]}`,
+                stack: error.stack || error.message || String(error),
+                url: window.location.href,
+                type: "Network Failed"
+              }
+            }).catch(() => {});
+          } catch(e){}
+        }
+        throw error;
+      });
+  };
+}
+
+function setupSessionReplay() {
+  document.addEventListener("click", (e) => {
+    if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.sendMessage) return;
+    try {
+      const target = e.target;
+      if (!target) return;
+      if (target.closest("#vexx-sidebar-container, #vexx-copilot-trigger")) return;
+
+      const tagName = target.tagName.toLowerCase();
+      let label = target.textContent?.trim() || target.value || target.getAttribute("aria-label") || target.placeholder || "";
+      if (label.length > 50) label = label.substring(0, 47) + "...";
+
+      let descriptor = `Clicou em <${tagName}>`;
+      if (label) {
+        descriptor = `Clicou em ${tagName === "a" ? "link" : (tagName === "button" ? "botão" : "elemento")} "${label}"`;
+      }
+
+      chrome.runtime.sendMessage({
+        action: "LOG_USER_ACTION",
+        payload: {
+          actionText: descriptor,
+          url: window.location.href
+        }
+      }).catch(() => {});
+    } catch(err){}
+  }, true);
+
+  let inputDebounceTimeout;
+  document.addEventListener("input", (e) => {
+    if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.sendMessage) return;
+    try {
+      const target = e.target;
+      if (!target) return;
+      if (target.closest("#vexx-sidebar-container, #vexx-copilot-trigger")) return;
+
+      const tagName = target.tagName.toLowerCase();
+      if (tagName !== "input" && tagName !== "textarea" && target.getAttribute("contenteditable") !== "true") return;
+
+      clearTimeout(inputDebounceTimeout);
+      inputDebounceTimeout = setTimeout(() => {
+        let label = target.getAttribute("placeholder") || target.name || target.id || "campo";
+        
+        let isSensitive = false;
+        const type = (target.getAttribute("type") || "").toLowerCase();
+        const autocomplete = (target.getAttribute("autocomplete") || "").toLowerCase();
+        const nameOrId = ((target.name || "") + " " + (target.id || "")).toLowerCase();
+        
+        if (
+          type === "password" || 
+          autocomplete.includes("cc-") || 
+          autocomplete.includes("card") || 
+          autocomplete.includes("security") ||
+          nameOrId.includes("senha") || 
+          nameOrId.includes("password") || 
+          nameOrId.includes("cvv") || 
+          nameOrId.includes("card") || 
+          nameOrId.includes("credit") || 
+          nameOrId.includes("cc-") ||
+          nameOrId.includes("token")
+        ) {
+          isSensitive = true;
+        }
+
+        let value = isSensitive ? "[dados protegidos]" : (target.value || target.textContent || "");
+        if (value.length > 40) value = value.substring(0, 37) + "...";
+
+        const descriptor = `Preencheu "${label}": "${value}"`;
+        chrome.runtime.sendMessage({
+          action: "LOG_USER_ACTION",
+          payload: {
+            actionText: descriptor,
+            url: window.location.href
+          }
+        }).catch(() => {});
+      }, 1500);
+    } catch(err){}
+  }, true);
+}
+
+function setupRealTimeChangeDetection() {
+  const observer = new MutationObserver((mutations) => {
+    let modalDetected = false;
+    let notificationDetected = false;
+    let formDetected = false;
+
+    for (const mutation of mutations) {
+      if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          if (node.closest?.("#vexx-sidebar-container, #vexx-copilot-trigger")) continue;
+
+          const tagName = node.tagName.toLowerCase();
+          const className = typeof node.className === "string" ? node.className.toLowerCase() : "";
+          const id = typeof node.id === "string" ? node.id.toLowerCase() : "";
+          const role = node.getAttribute?.("role") || "";
+
+          if (role === "dialog" || className.includes("modal") || className.includes("popup") || className.includes("dialog") || id.includes("modal")) {
+            const style = window.getComputedStyle(node);
+            if (style.position === "fixed" || style.position === "absolute" || node.querySelector("[role='dialog']")) {
+              modalDetected = true;
+            }
+          }
+
+          if (className.includes("toast") || className.includes("alert") || className.includes("notification") || role === "alert") {
+            notificationDetected = true;
+          }
+
+          if (tagName === "form" || node.querySelector?.("form") || tagName === "input" || node.querySelector?.("input")) {
+            formDetected = true;
+          }
+        }
+      }
+    }
+
+    if (modalDetected || notificationDetected || formDetected) {
+      let changeType = "mutação na página";
+      if (modalDetected) changeType = "modal";
+      else if (notificationDetected) changeType = "notificação";
+      else if (formDetected) changeType = "formulário";
+
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          source: "vexx-content",
+          action: "PAGE_MUTATION_DETECTED",
+          payload: {
+            type: changeType,
+            timestamp: Date.now()
+          }
+        }, "*");
+      }
+      sendScrapedDataToSidebar();
+    }
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+init();

@@ -69,11 +69,13 @@ async function generateReplies() {
       }
     }
 
-    let userPrompt = `${chatHistory}${profileContext}${memoryPromptContext}\n\nCom base no histórico acima, elabore a melhor resposta a ser enviada agora.`;
-
+    let userPrompt = "";
     const isChatContext = pageContext.type === "instagram" || pageContext.type === "whatsapp";
-    
-    if (!isChatContext && pageContext.platform === "instagram") {
+    const isGeneralWebPage = pageContext.type === "general" || (!isChatContext && pageContext.platform !== "instagram");
+
+    if (isChatContext) {
+      userPrompt = `${chatHistory}${profileContext}${memoryPromptContext}\n\nCom base no histórico acima, elabore a melhor resposta a ser enviada agora.`;
+    } else if (!isChatContext && pageContext.platform === "instagram") {
       if (pageContext.type === "creation") {
         systemPrompt = `${systemPromptOverride}\n\nVocê é o Diretor Criativo VEXX. Gere ideias de tendências musicais, roteiros para Stories/Reels e 1 prompt detalhado de imagem para IA.`;
         userPrompt = `O usuário do wifa jl OS está criando um post/story/reel no Instagram agora. 
@@ -108,6 +110,111 @@ Legenda e Comentários do Post:\n${chatHistory}\n
 Formule:
 1. Um comentário estratégico e marcante para o usuário escrever neste post visando atrair atenção para o seu próprio perfil (autoridade).
 2. Uma análise breve (1-2 linhas) do tom predominante do público desse post.`;
+      }
+    } else if (isGeneralWebPage) {
+      systemPrompt = `${systemPromptOverride}\n\nVocê é o VEXX Universal AI Operating System para Navegador. Sua função é analisar detalhadamente qualquer página web, plataforma SaaS, dashboard ou aplicação acessada pelo usuário, integrando-a com o contexto de seu Workspace ativo.`;
+      
+      let goalsText = "Nenhum objetivo cadastrado.";
+      if (typeof projectGoals !== "undefined" && projectGoals.length > 0) {
+        goalsText = projectGoals.map(g => `- [${g.done ? "x" : " "}] ${g.text}`).join("\n");
+      }
+
+      let domText = "";
+      if (pageContext.domIntelligence) {
+        const dom = pageContext.domIntelligence;
+        domText += `- Formulários: ${dom.forms?.length || 0}\n`;
+        if (dom.forms && dom.forms.length > 0) {
+          dom.forms.forEach((f, i) => {
+            domText += `  * Form #${i+1} (ID: ${f.id}): Campos: ${f.fields?.join(", ") || "nenhum"}\n`;
+          });
+        }
+        domText += `- Inputs/Campos de Texto: ${dom.inputs?.length || 0}\n`;
+        if (dom.inputs && dom.inputs.length > 0) {
+          dom.inputs.forEach((inp, i) => {
+            domText += `  * Campo: Label: "${inp.label}", Place: "${inp.placeholder}", Tipo: "${inp.type}"\n`;
+          });
+        }
+        domText += `- Botões Mapeados: ${dom.buttons?.length || 0}\n`;
+        if (dom.buttons && dom.buttons.length > 0) {
+          dom.buttons.forEach((btn, i) => {
+            domText += `  * Botão: "${btn.text}"\n`;
+          });
+        }
+        domText += `- Links Mapeados: ${dom.links?.length || 0}\n`;
+        domText += `- Tabelas: ${dom.tables?.length || 0}\n`;
+        domText += `- Modais Ativos: ${dom.modals?.length || 0}\n`;
+        if (dom.modals && dom.modals.length > 0) {
+          dom.modals.forEach((m, i) => {
+            domText += `  * Modal Ativo: "${m.title}"\n`;
+          });
+        }
+        domText += `- Gráficos: ${dom.charts?.length || 0}\n`;
+      }
+
+      let techText = "Nenhuma tecnologia detectada no scraper de cliente.";
+      if (pageContext.reverseEngineering) {
+        const rev = pageContext.reverseEngineering;
+        techText = `- Framework Principal: ${rev.framework || "Desconhecido"}\n` +
+                   `- Bibliotecas: ${(rev.libraries || []).join(", ") || "Nenhuma detectada"}\n` +
+                   `- APIs: ${(rev.apis || []).join(", ") || "Nenhuma detectada"}\n` +
+                   `- Arquitetura: ${rev.architecture || "Desconhecido"}\n` +
+                   `- Banco de Dados Provável: ${rev.database || "Não Identificado"}`;
+      }
+
+      let activityText = pageContext.userActivity || "Navegando/Lendo informações";
+
+      if (customPromptVal) {
+        userPrompt = `[CONTEXTO DO WORKSPACE]
+Projeto Ativo: ${typeof workspaceProject !== "undefined" ? workspaceProject : "Nenhum"}
+Objetivos/Tarefas Atuais:
+${goalsText}
+
+[DADOS DA PÁGINA WEB ATIVA]
+URL: ${pageContext.url}
+Título da Página: ${pageContext.contactName || "Web Page"}
+Estado de Atividade do Usuário: ${activityText}
+
+[ENGENHARIA REVERSA & FRAMEWORKS]
+${techText}
+
+[INTELIGÊNCIA DO DOM (ELEMENTOS MAPEADOS)]
+${domText}
+
+[CONTEÚDO TEXTUAL VISÍVEL (RESUMIDO)]
+${pageContext.visibleText ? pageContext.visibleText.substring(0, 1500) : "Sem conteúdo textual legível."}
+
+[INSTRUÇÃO DO USUÁRIO]
+${customPromptVal}
+
+Responda à instrução do usuário de forma extremamente precisa, objetiva e contextualizada, utilizando as informações da página web e do Workspace fornecidos acima.`;
+      } else {
+        userPrompt = `[CONTEXTO DO WORKSPACE]
+Projeto Ativo: ${typeof workspaceProject !== "undefined" ? workspaceProject : "Nenhum"}
+Objetivos/Tarefas Atuais:
+${goalsText}
+
+[DADOS DA PÁGINA WEB ATIVA]
+URL: ${pageContext.url}
+Título da Página: ${pageContext.contactName || "Web Page"}
+Estado de Atividade do Usuário: ${activityText}
+
+[ENGENHARIA REVERSA & FRAMEWORKS]
+${techText}
+
+[INTELIGÊNCIA DO DOM (ELEMENTOS MAPEADOS)]
+${domText}
+
+[CONTEÚDO TEXTUAL VISÍVEL (RESUMIDO)]
+${pageContext.visibleText ? pageContext.visibleText.substring(0, 1500) : "Sem conteúdo textual legível."}
+
+Por favor, gere uma análise diagnóstica e um plano de ação tático para esta página no contexto do Workspace do usuário. 
+Sua resposta deve ser estruturada com os seguintes tópicos (use markdown elegante com emojis):
+
+1. **🔍 Diagnóstico da Interface & Objetivo**: Explique concisamente o que é este site/sistema, para que serve e o que o usuário está fazendo nele no momento.
+2. **🛠️ Engenharia Reversa & Tecnologias**: Um resumo das tecnologias encontradas e da arquitetura observada na página.
+3. **🧱 Estrutura Interativa (DOM Map)**: Como a página está estruturada em termos de campos de entrada, formulários e botões para interação.
+4. **🎯 Alinhamento com o Workspace**: Como esta página se conecta com o projeto "${typeof workspaceProject !== "undefined" ? workspaceProject : "Nenhum"}" e com as tarefas do usuário.
+5. **💡 Próximas Ações Recomendadas**: 3 sugestões de ações práticas e comandos ou preenchimentos que o usuário pode realizar aqui para avançar em seu projeto.`;
       }
     }
 

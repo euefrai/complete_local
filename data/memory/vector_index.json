@@ -1,0 +1,59 @@
+[
+  {
+    "id": "t1",
+    "text": "Inteligência artificial e aprendizado de máquina são tecnologias poderosas",
+    "metadata": {
+      "category": "tech",
+      "priority": 5,
+      "tags": [
+        "ai",
+        "ml"
+      ],
+      "source": null,
+      "createdAt": "2026-06-13T21:03:28.299Z"
+    }
+  },
+  {
+    "id": "t2",
+    "text": "Machine learning models require large datasets for training",
+    "metadata": {
+      "category": "tech",
+      "priority": 3,
+      "tags": [
+        "ml"
+      ],
+      "source": null,
+      "createdAt": "2026-06-13T21:03:28.300Z"
+    }
+  },
+  {
+    "id": "lt_1781385213039_005",
+    "text": "niche: IA e Produtividade",
+    "metadata": {
+      "category": "preference",
+      "priority": "HIGH",
+      "tags": [
+        "migrado",
+        "preferencia",
+        "niche"
+      ],
+      "source": "db_long_term_memory.json",
+      "createdAt": "2026-06-13T21:13:33.039Z"
+    }
+  },
+  {
+    "id": "lt_1781385213040_fp7",
+    "text": "style: Profissional e Objetivo",
+    "metadata": {
+      "category": "preference",
+      "priority": "HIGH",
+      "tags": [
+        "migrado",
+        "preferencia",
+        "style"
+      ],
+      "source": "db_long_term_memory.json",
+      "createdAt": "2026-06-13T21:13:33.040Z"
+    }
+  }
+]

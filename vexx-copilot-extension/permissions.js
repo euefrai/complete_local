@@ -136,7 +136,7 @@ class PermissionsManager {
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
       new Notification(title, {
         body: message,
-        icon: chrome.runtime.getURL("vexx-copilot-extension/vexx_copilot_icon.png") // fallback if icon doesn't exist
+        icon: chrome.runtime.getURL("vexx_copilot_icon.png") // fallback if icon doesn't exist
       });
     }
   }

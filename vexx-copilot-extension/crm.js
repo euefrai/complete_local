@@ -145,13 +145,13 @@ function exportLeadsCSV() {
   const headers = ["Data", "Plataforma", "Contato", "Username", "Bio", "Msgs", "Última Mensagem", "Resumo IA"];
   const rows = savedLeads.map(l => [
     new Date(l.timestamp).toLocaleString("pt-BR"),
-    l.platform,
-    l.contactName,
-    l.contactUsername || "",
-    (l.contactBio || "").replace(/"/g, '""'),
-    l.messageCount,
-    (l.lastMessage || "").replace(/"/g, '""'),
-    (l.aiSummary || "").replace(/"/g, '""')
+    String(l.platform || ""),
+    String(l.contactName || "").replace(/"/g, '""'),
+    String(l.contactUsername || "").replace(/"/g, '""'),
+    String(l.contactBio || "").replace(/"/g, '""'),
+    String(l.messageCount || 0),
+    String(l.lastMessage || "").replace(/"/g, '""'),
+    String(l.aiSummary || "").replace(/"/g, '""')
   ]);
 
   let csv = headers.join(",") + "\n";

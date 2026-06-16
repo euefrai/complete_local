@@ -59,7 +59,7 @@ class ContextEngine {
       }
     }
 
-    return "unknown";
+    return "general";
   }
 
   // Master method to perform deep scraping of the current page context
@@ -70,7 +70,7 @@ class ContextEngine {
 
     const baseContext = {
       type: pageType,
-      platform: url.includes("whatsapp.com") ? "whatsapp" : "instagram",
+      platform: url.includes("whatsapp.com") ? "whatsapp" : (url.includes("instagram.com") ? "instagram" : window.location.hostname),
       url: url,
       timestamp: timestamp,
       contactName: "",
@@ -126,15 +126,92 @@ class ContextEngine {
             messages: [{ sender: "system", senderName: "Criação", text: "Usuário está na tela de criação de post/story/reel." }]
           };
           break;
+        case "general":
         default:
+          const mockMessages = [];
+          
+          // 1. Tenta encontrar elementos de comentários ou posts de fóruns/redes comuns
+          const generalTextSelectors = [
+            ".comment-body", ".comment-content", ".comment-text", 
+            "yt-attributed-string#content-text", "#content-text", 
+            ".comment__text", "article p", ".post-text", ".post-body",
+            ".TimelineItem-body", ".markdown-body p"
+          ];
+          
+          let foundElements = [];
+          for (const selector of generalTextSelectors) {
+            const els = document.querySelectorAll(selector);
+            if (els.length > 0) {
+              foundElements = Array.from(els);
+              break;
+            }
+          }
+          
+          if (foundElements.length > 0) {
+            foundElements.forEach(el => {
+              if (el.closest("#vexx-sidebar-container, #vexx-copilot-trigger")) return;
+              const text = el.textContent.trim();
+              if (text && text.length > 5) {
+                let senderName = "Leitor";
+                const parentComment = el.closest(".comment, ytd-comment-thread-renderer, .timeline-comment, .TimelineItem");
+                if (parentComment) {
+                  const authorEl = parentComment.querySelector(".author, #author-text, .comment-author, a[class*='author']");
+                  if (authorEl) senderName = authorEl.textContent.trim();
+                }
+                mockMessages.push({
+                  sender: "contact",
+                  senderName: senderName,
+                  text: text,
+                  time: ""
+                });
+              }
+            });
+          }
+          
+          // 2. Se não encontrou comentários, usa cabeçalhos e parágrafos do corpo da página como mensagens
+          if (mockMessages.length === 0) {
+            const headings = document.querySelectorAll("h1, h2, h3");
+            headings.forEach(h => {
+              const text = h.textContent.trim();
+              if (text && text.length > 3 && !h.closest("#vexx-sidebar-container, #vexx-copilot-trigger")) {
+                mockMessages.push({
+                  sender: "contact",
+                  senderName: h.tagName,
+                  text: text,
+                  time: ""
+                });
+              }
+            });
+            
+            const paras = document.querySelectorAll("main p, article p, p");
+            let count = 0;
+            for (const p of paras) {
+              if (count >= 10) break;
+              const text = p.textContent.trim();
+              if (text && text.length > 20 && !p.closest("#vexx-sidebar-container, #vexx-copilot-trigger")) {
+                mockMessages.push({
+                  sender: "contact",
+                  senderName: "Conteúdo",
+                  text: text,
+                  time: ""
+                });
+                count++;
+              }
+            }
+          }
+
           scrapedData = {
-            contactName: "Página Desconhecida",
-            messages: []
+            contactName: document.title || window.location.hostname,
+            messages: mockMessages.slice(-15)
           };
           break;
       }
 
-      return { ...baseContext, ...scrapedData };
+      const context = { ...baseContext, ...scrapedData };
+      context.domIntelligence = this.mapDOMIntelligence();
+      context.reverseEngineering = this.detectFrameworks();
+      context.userActivity = this.detectUserActivity();
+      return context;
 
     } catch (e) {
       console.error("[ContextEngine] Erro crítico no scrapeDeep:", e);
@@ -903,6 +980,339 @@ class ContextEngine {
     } catch (e) {}
     
     return structure;
+  }
+
+  static mapDOMIntelligence() {
+    const map = {
+      inputs: [],
+      buttons: [],
+      dropdowns: [],
+      links: [],
+      menus: [],
+      forms: [],
+      tables: [],
+      modals: [],
+      charts: []
+    };
+
+    try {
+      // 1. Inputs & Textareas
+      const inputElements = document.querySelectorAll("input, textarea, [contenteditable='true'], [role='textbox']");
+      inputElements.forEach((el, index) => {
+        if (index > 30) return;
+        const rect = el.getBoundingClientRect();
+        const visible = rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).display !== 'none';
+        if (!visible) return;
+        
+        let label = el.getAttribute("placeholder") || el.getAttribute("aria-label") || el.name || el.id || "";
+        if (!label) {
+          const parentLabel = el.closest("label")?.textContent?.trim();
+          if (parentLabel) label = parentLabel;
+        }
+        
+        map.inputs.push({
+          type: el.tagName.toLowerCase() === "input" ? el.getAttribute("type") || "text" : "textbox",
+          label: label.substring(0, 50),
+          placeholder: (el.getAttribute("placeholder") || "").substring(0, 50),
+          id: el.id || "",
+          name: el.name || "",
+          value: el.tagName.toLowerCase() === "input" && el.type === "password" ? "[senha]" : (el.value || el.textContent || "").substring(0, 100),
+          coords: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)]
+        });
+      });
+
+      // 2. Buttons
+      const buttonElements = document.querySelectorAll("button, input[type='button'], input[type='submit'], [role='button'], a.btn, a.button");
+      buttonElements.forEach((el, index) => {
+        if (index > 30) return;
+        const rect = el.getBoundingClientRect();
+        const visible = rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).display !== 'none';
+        if (!visible) return;
+
+        const text = el.textContent?.trim() || el.getAttribute("aria-label") || el.value || el.title || "";
+        if (!text) return;
+
+        map.buttons.push({
+          text: text.substring(0, 50),
+          id: el.id || "",
+          className: el.className || "",
+          coords: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)]
+        });
+      });
+
+      // 3. Dropdowns
+      const selectElements = document.querySelectorAll("select, [role='listbox'], [aria-haspopup='listbox']");
+      selectElements.forEach((el, index) => {
+        if (index > 15) return;
+        const rect = el.getBoundingClientRect();
+        const visible = rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).display !== 'none';
+        if (!visible) return;
+
+        map.dropdowns.push({
+          id: el.id || "",
+          label: (el.getAttribute("aria-label") || el.name || "").substring(0, 50),
+          optionsCount: el.options ? el.options.length : 0,
+          coords: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)]
+        });
+      });
+
+      // 4. Links
+      const linkElements = document.querySelectorAll("a[href]");
+      linkElements.forEach((el, index) => {
+        if (index > 30) return;
+        const rect = el.getBoundingClientRect();
+        const visible = rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).display !== 'none';
+        if (!visible) return;
+
+        const text = el.textContent?.trim() || "";
+        const href = el.getAttribute("href") || "";
+        if (!text && !el.querySelector("img, svg")) return;
+
+        map.links.push({
+          text: text.substring(0, 50) || "[Link com imagem/ícone]",
+          href: href.startsWith("http") ? href : window.location.origin + href,
+          coords: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)]
+        });
+      });
+
+      // 5. Menus
+      const menuElements = document.querySelectorAll("nav, [role='navigation'], [role='menubar'], header nav, sidebar nav");
+      menuElements.forEach((el, index) => {
+        if (index > 5) return;
+        const links = Array.from(el.querySelectorAll("a")).map(a => a.textContent?.trim()).filter(Boolean);
+        map.menus.push({
+          role: el.getAttribute("role") || "nav",
+          items: links.slice(0, 10)
+        });
+      });
+
+      // 6. Forms
+      const formElements = document.querySelectorAll("form");
+      formElements.forEach((el, index) => {
+        if (index > 5) return;
+        const inputs = Array.from(el.querySelectorAll("input, textarea")).map(i => i.name || i.placeholder || i.id).filter(Boolean);
+        map.forms.push({
+          id: el.id || "",
+          action: el.getAttribute("action") || "",
+          fields: inputs
+        });
+      });
+
+      // 7. Tables
+      const tableElements = document.querySelectorAll("table");
+      tableElements.forEach((el, index) => {
+        if (index > 5) return;
+        const headers = Array.from(el.querySelectorAll("th")).map(th => th.textContent?.trim()).filter(Boolean);
+        const rows = el.querySelectorAll("tr").length;
+        map.tables.push({
+          headers: headers.slice(0, 10),
+          rowCount: rows
+        });
+      });
+
+      // 8. Modals / Dialogs
+      const modalElements = document.querySelectorAll("[role='dialog'], .modal, .popup, .dialog, [id*='modal'], [class*='modal']");
+      modalElements.forEach((el, index) => {
+        if (index > 5) return;
+        const rect = el.getBoundingClientRect();
+        const visible = rect.width > 100 && rect.height > 100 && window.getComputedStyle(el).display !== 'none';
+        if (!visible) return;
+
+        const style = window.getComputedStyle(el);
+        if (style.position !== 'fixed' && style.position !== 'absolute') return;
+
+        const title = el.querySelector("h1, h2, h3, h4, .modal-title, .title")?.textContent?.trim() || "Modal Sem Título";
+        map.modals.push({
+          title: title.substring(0, 50),
+          coords: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)]
+        });
+      });
+
+      // 9. Charts
+      const chartElements = document.querySelectorAll("canvas, svg, [class*='chart'], [id*='chart']");
+      chartElements.forEach((el, index) => {
+        if (index > 5) return;
+        const rect = el.getBoundingClientRect();
+        const visible = rect.width > 50 && rect.height > 50 && window.getComputedStyle(el).display !== 'none';
+        if (!visible) return;
+
+        const className = el.className || "";
+        const id = el.id || "";
+        const isChart = (typeof className === 'string' && className.toLowerCase().includes('chart')) || 
+                        (typeof id === 'string' && id.toLowerCase().includes('chart')) ||
+                        el.tagName.toLowerCase() === 'canvas';
+        if (!isChart) return;
+
+        map.charts.push({
+          tag: el.tagName.toLowerCase(),
+          id: id,
+          coords: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)]
+        });
+      });
+
+    } catch (e) {
+      console.error("[DOMIntelligence] Erro ao mapear DOM:", e);
+    }
+
+    return map;
+  }
+
+  static detectFrameworks() {
+    const info = {
+      framework: "Custom HTML/JS",
+      libraries: [],
+      architecture: "Client-Server Monolith",
+      apis: [],
+      database: "Não Identificado"
+    };
+
+    try {
+      const html = document.documentElement.innerHTML;
+      const scripts = Array.from(document.querySelectorAll("script")).map(s => s.src || s.textContent || "");
+
+      // 1. Framework
+      if (window.React || document.querySelector("[data-reactroot]") || html.includes("react-data") || scripts.some(s => s.includes("react"))) {
+        info.framework = "React";
+        if (html.includes("_next/static") || window.__NEXT_DATA__) {
+          info.framework = "Next.js (React)";
+          info.architecture = "SSR / Jamstack";
+        }
+      } else if (window.Vue || html.includes("v-") || scripts.some(s => s.includes("vue"))) {
+        info.framework = "Vue.js";
+        if (html.includes("nuxt") || window.__NUXT__) {
+          info.framework = "Nuxt.js (Vue)";
+          info.architecture = "SSR / Static Site";
+        }
+      } else if (window.angular || html.includes("ng-version") || html.includes("ng-app")) {
+        info.framework = "Angular";
+        info.architecture = "SPA (Single Page App)";
+      } else if (window.jQuery || scripts.some(s => s.includes("jquery"))) {
+        info.framework = "jQuery / Vanilla JS";
+      }
+
+      // 2. Libraries
+      if (window.Redux || html.includes("redux")) info.libraries.push("Redux");
+      if (window.TailwindCss || html.includes("tailwind") || Array.from(document.styleSheets).some(s => {
+        try { return Array.from(s.cssRules || []).some(r => r.tw || r.selectorText?.includes('.tw-') || r.cssText?.includes('--tw-')); } catch(e) { return false; }
+      })) {
+        info.libraries.push("TailwindCSS");
+      }
+      if (window.bootstrap || html.includes("bootstrap")) info.libraries.push("Bootstrap");
+      if (window.Chart || html.includes("chart.js")) info.libraries.push("Chart.js");
+      if (window.FramerMotion || html.includes("framer-motion")) info.libraries.push("Framer Motion");
+
+      // 3. APIs / Services
+      if (html.includes("supabase.co") || window.supabase || scripts.some(s => s.includes("supabase"))) {
+        info.apis.push("Supabase REST/Realtime API");
+        info.database = "PostgreSQL (via Supabase)";
+      }
+      if (html.includes("firebaseio.com") || window.firebase || scripts.some(s => s.includes("firebase"))) {
+        info.apis.push("Firebase Firestore/RTDB");
+        info.database = "NoSQL Firestore";
+      }
+      if (html.includes("api.stripe.com") || window.Stripe) info.apis.push("Stripe Payment API");
+      if (html.includes("graphql") || html.includes("__typename")) {
+        info.apis.push("GraphQL API");
+      }
+
+      // Find probable APIs based on URL fetch patterns in scripts
+      const scriptsUrls = Array.from(document.querySelectorAll("script[src]")).map(s => s.src);
+      scriptsUrls.forEach(url => {
+        if (url.includes("api.")) {
+          try {
+            const domain = new URL(url).hostname;
+            if (!info.apis.includes(domain)) info.apis.push(domain);
+          } catch(e){}
+        }
+      });
+
+      // Default Architecture heuristically
+      if (info.framework.includes("Next.js") || info.framework.includes("Nuxt.js")) {
+        info.architecture = "Jamstack / Serverless Microservices";
+      } else if (info.apis.length > 0) {
+        info.architecture = "Client-Directed API Backend (SPA)";
+      }
+
+    } catch (e) {
+      console.error("[SiteReverseEngineering] Erro no reverse engineering:", e);
+    }
+
+    return info;
+  }
+
+  static detectUserActivity() {
+    const url = window.location.href;
+    const title = document.title || "";
+    let activity = "Navegando";
+
+    try {
+      if (url.includes("github.com")) {
+        if (url.includes("/edit/") || url.includes("/_edit/")) {
+          activity = "Editando código direto no repositório";
+        } else if (url.includes("/pull/")) {
+          activity = "Revisando Pull Request";
+        } else if (url.includes("/issues/new")) {
+          activity = "Criando Issue";
+        } else if (url.includes("/issues/")) {
+          activity = "Discutindo Issue";
+        } else if (url.includes("/blob/")) {
+          activity = "Visualizando arquivo de código";
+        } else {
+          activity = "Navegando no repositório GitHub";
+        }
+      } else if (url.includes("figma.com")) {
+        if (url.includes("/file/")) {
+          activity = "Projetando interface UI/UX no Figma";
+        } else if (url.includes("/proto/")) {
+          activity = "Testando protótipo interativo no Figma";
+        } else {
+          activity = "Navegando no Figma";
+        }
+      } else if (url.includes("canva.com")) {
+        if (url.includes("/design/")) {
+          activity = "Criando arte gráfica no Canva";
+        } else {
+          activity = "Navegando no Canva";
+        }
+      } else if (url.includes("supabase.com") || url.includes("supabase.co")) {
+        if (url.includes("/editor/")) {
+          activity = "Editando banco de dados no Supabase";
+        } else if (url.includes("/sql")) {
+          activity = "Executando queries SQL no Supabase";
+        } else {
+          activity = "Configurando serviços no Supabase";
+        }
+      } else if (url.includes("firebase.google.com")) {
+        activity = "Gerenciando backend no Firebase Console";
+      } else if (url.includes("youtube.com")) {
+        if (url.includes("watch?v=")) {
+          activity = `Assistindo vídeo: "${title.replace(" - YouTube", "")}"`;
+        } else {
+          activity = "Navegando no YouTube";
+        }
+      } else if (url.includes("chatgpt.com") || url.includes("chat.openai.com")) {
+        activity = "Consultando inteligência artificial (ChatGPT)";
+      } else {
+        const activeEl = document.activeElement;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.getAttribute('contenteditable') === 'true')) {
+          const form = activeEl.closest('form');
+          const placeholder = activeEl.getAttribute('placeholder') || '';
+          if (placeholder.toLowerCase().includes('buscar') || placeholder.toLowerCase().includes('pesquisar')) {
+            activity = "Pesquisando conteúdo na página";
+          } else if (activeEl.type === 'password') {
+            activity = "Preenchendo formulário de login/segurança";
+          } else if (form) {
+            activity = "Preenchendo formulário de dados";
+          } else {
+            activity = "Digitando texto na página";
+          }
+        } else {
+          activity = `Lendo conteúdo em "${title}"`;
+        }
+      }
+    } catch(e){}
+
+    return activity;
   }
 }
 

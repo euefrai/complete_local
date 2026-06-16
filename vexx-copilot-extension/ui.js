@@ -114,6 +114,9 @@ function switchTab(tabId) {
 
   if (tabId === 'copilot') {
     requestScrape();
+  } else if (tabId === 'workspace') {
+    if (typeof requestWorkspaceState === "function") requestWorkspaceState();
+    requestScrape();
   } else if (tabId === 'settings') {
     if (typeof renderLeadsPanel === "function") renderLeadsPanel();
     if (typeof renderMemoryPanel === "function") renderMemoryPanel();
@@ -140,6 +143,8 @@ function updateContextUI() {
       else if (pageContext.type === "reel") suffix = " (Reel)";
       else if (pageContext.type === "stories") suffix = " (Stories)";
       pageTypeEl.innerHTML = `<i class="ti ti-brand-instagram" style="color: #e1306c;"></i> Instagram${suffix}`;
+    } else if (pageContext.type === "general" || pageContext.platform) {
+      pageTypeEl.innerHTML = `<i class="ti ti-world" style="color: var(--color-accent-amethyst);"></i> Web: ${pageContext.platform || "Página Geral"}`;
     } else {
       pageTypeEl.textContent = "Desconhecido";
     }
@@ -170,6 +175,9 @@ function updateContextUI() {
       const last = pageContext.messages[pageContext.messages.length - 1];
       lastMsgEl.innerHTML = `<strong>${last.senderName}:</strong> "${last.text}"`;
       lastMsgEl.classList.remove("italic");
+    } else if (pageContext.type === "general") {
+      lastMsgEl.textContent = "Página geral mapeada pelo Universal AI OS.";
+      lastMsgEl.classList.add("italic");
     } else {
       lastMsgEl.textContent = "Nenhuma mensagem encontrada na conversa ativa.";
       lastMsgEl.classList.add("italic");
@@ -182,7 +190,9 @@ function updateContextUI() {
   if (pageContext.profile && followersRow) {
     followersRow.classList.remove("hidden");
     const p = pageContext.profile;
-    followersEl.innerHTML = `<strong>${p.followers.toLocaleString("pt-BR")}</strong> seg. | <strong>${p.following.toLocaleString("pt-BR")}</strong> seg.`;
+    const followersVal = (typeof p.followers === 'number' ? p.followers.toLocaleString("pt-BR") : (p.followers || "-"));
+    const followingVal = (typeof p.following === 'number' ? p.following.toLocaleString("pt-BR") : (p.following || "-"));
+    followersEl.innerHTML = `<strong>${followersVal}</strong> seg. | <strong>${followingVal}</strong> seg.`;
   } else if (followersRow) {
     followersRow.classList.add("hidden");
   }
@@ -192,7 +202,9 @@ function updateContextUI() {
   if (pageContext.post && engagementRow) {
     engagementRow.classList.remove("hidden");
     const po = pageContext.post;
-    engagementEl.innerHTML = `<strong>${po.likes.toLocaleString("pt-BR")}</strong> curtidas | <strong>${po.commentsCount}</strong> coment.`;
+    const likesVal = (typeof po.likes === 'number' ? po.likes.toLocaleString("pt-BR") : (po.likes || "-"));
+    const commentsVal = po.commentsCount !== undefined ? po.commentsCount : "-";
+    engagementEl.innerHTML = `<strong>${likesVal}</strong> curtidas | <strong>${commentsVal}</strong> coment.`;
   } else if (engagementRow) {
     engagementRow.classList.add("hidden");
   }
@@ -201,8 +213,8 @@ function updateContextUI() {
   const sentimentEl = document.getElementById("context-sentiment");
   const sentimentRow = sentimentEl ? sentimentEl.closest(".context-row") : null;
   if (sentimentRow) {
-    if (pageContext.messages && pageContext.messages.length > 0 && typeof SentimentAnalyzer !== "undefined") {
-      const res = SentimentAnalyzer.summarizeAudience(pageContext.messages);
+    if (pageContext.messages && pageContext.messages.length > 0 && typeof window.SentimentAnalyzer !== "undefined") {
+      const res = window.SentimentAnalyzer.summarizeAudience(pageContext.messages);
       sentimentRow.classList.remove("hidden");
       sentimentEl.innerHTML = `${res.emoji} <strong>${res.summary}</strong> (${res.percentagePositive}% pos / ${res.percentageNegative}% neg)`;
     } else {

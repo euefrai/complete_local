@@ -13,9 +13,9 @@
   "host_permissions": [
     "http://localhost:3000/*",
     "http://127.0.0.1:3000/*",
-    "https://*.whatsapp.com/*",
-    "https://*.instagram.com/*",
-    "https://instagram.com/*"
+    "http://*/*",
+    "https://*/*",
+    "file://*/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -23,9 +23,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.whatsapp.com/*",
-        "https://*.instagram.com/*",
-        "https://instagram.com/*"
+        "<all_urls>",
+        "file://*/*"
       ],
       "js": [
         "context-engine.js",
@@ -61,5 +60,14 @@
         "<all_urls>"
       ]
     }
-  ]
+  ],
+  "commands": {
+    "toggle-sidebar": {
+      "suggested_key": {
+        "default": "Alt+Shift+V",
+        "mac": "Alt+Shift+V"
+      },
+      "description": "Alternar barra lateral do Vexx Copilot"
+    }
+  }
 }

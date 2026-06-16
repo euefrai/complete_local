@@ -43,12 +43,77 @@ async function sendArenaMessage() {
       pageContextText += `\n\n[CONTEXTO ATUAL DA PÁGINA DETECTADA]`;
       pageContextText += `\nTipo de página: ${pageContext.type || "Desconhecido"}`;
       pageContextText += `\nPlataforma: ${pageContext.platform || "Desconhecido"}`;
+      pageContextText += `\nURL: ${pageContext.url || "Desconhecido"}`;
+      pageContextText += `\nTítulo: ${pageContext.contactName || document.title || "Desconhecido"}`;
+      
+      if (pageContext.userActivity) {
+        pageContextText += `\nAtividade do Usuário: ${pageContext.userActivity}`;
+      }
+      
       if (pageContext.contactUsername) pageContextText += `\nUsername do contato: @${pageContext.contactUsername}`;
-      if (pageContext.contactName) pageContextText += `\nNome do contato: ${pageContext.contactName}`;
       if (pageContext.contactBio) pageContextText += `\nBio do contato: "${pageContext.contactBio}"`;
       if (pageContext.followers) pageContextText += `\nSeguidores: ${pageContext.followers}`;
       if (pageContext.engagement) pageContextText += `\nEngajamento/Likes: ${pageContext.engagement}`;
       if (pageContext.sentiment) pageContextText += `\nSentimento geral dos comentários: ${pageContext.sentiment}`;
+
+      // Injeta informações do Workspace Ativo
+      if (typeof workspaceProject !== "undefined") {
+        pageContextText += `\n\n[WORKSPACE DO USUÁRIO]`;
+        pageContextText += `\nProjeto Ativo: ${workspaceProject}`;
+        if (typeof projectGoals !== "undefined" && projectGoals.length > 0) {
+          const goalsList = projectGoals.map(g => `- [${g.done ? "x" : " "}] ${g.text}`).join("\n");
+          pageContextText += `\nObjetivos/Tarefas Atuais:\n${goalsList}`;
+        }
+      }
+
+      // Injeta Engenharia Reversa
+      if (pageContext.reverseEngineering) {
+        const rev = pageContext.reverseEngineering;
+        pageContextText += `\n\n[ENGENHARIA REVERSA DA PÁGINA]`;
+        pageContextText += `\nFramework Principal: ${rev.framework || "Desconhecido"}`;
+        pageContextText += `\nBibliotecas: ${(rev.libraries || []).join(", ") || "Nenhuma detectada"}`;
+        pageContextText += `\nAPIs: ${(rev.apis || []).join(", ") || "Nenhuma detectada"}`;
+        pageContextText += `\nArquitetura: ${rev.architecture || "Desconhecido"}`;
+        pageContextText += `\nBanco de Dados Provável: ${rev.database || "Não Identificado"}`;
+      }
+
+      // Injeta DOM Intelligence
+      if (pageContext.domIntelligence) {
+        const dom = pageContext.domIntelligence;
+        pageContextText += `\n\n[INTELIGÊNCIA DO DOM (ELEMENTOS E COORDENADAS)]`;
+        pageContextText += `\n- Formulários: ${dom.forms?.length || 0}`;
+        if (dom.forms && dom.forms.length > 0) {
+          dom.forms.forEach((f, i) => {
+            pageContextText += `\n  * Form #${i+1} (ID: ${f.id}): Campos: ${f.fields?.join(", ") || "nenhum"}`;
+          });
+        }
+        pageContextText += `\n- Inputs/Textareas: ${dom.inputs?.length || 0}`;
+        if (dom.inputs && dom.inputs.length > 0) {
+          dom.inputs.forEach((inp, i) => {
+            pageContextText += `\n  * Input: Label: "${inp.label}", Placeholder: "${inp.placeholder}", Tipo: "${inp.type}", Coordenadas: [${inp.coords?.join(",") || ""}]`;
+          });
+        }
+        pageContextText += `\n- Botões Mapeados: ${dom.buttons?.length || 0}`;
+        if (dom.buttons && dom.buttons.length > 0) {
+          dom.buttons.forEach((btn, i) => {
+            pageContextText += `\n  * Botão: Text: "${btn.text}", ID: "${btn.id}", Coordenadas: [${btn.coords?.join(",") || ""}]`;
+          });
+        }
+        pageContextText += `\n- Links Mapeados: ${dom.links?.length || 0}`;
+        pageContextText += `\n- Tabelas Mapeadas: ${dom.tables?.length || 0}`;
+        pageContextText += `\n- Modais Ativos: ${dom.modals?.length || 0}`;
+        if (dom.modals && dom.modals.length > 0) {
+          dom.modals.forEach((m, i) => {
+            pageContextText += `\n  * Modal Ativo: "${m.title}", Coordenadas: [${m.coords?.join(",") || ""}]`;
+          });
+        }
+        pageContextText += `\n- Gráficos Mapeados: ${dom.charts?.length || 0}`;
+      }
+
+      // Injeta trecho do conteúdo visível
+      if (pageContext.visibleText) {
+        pageContextText += `\n\n[CONTEÚDO TEXTUAL VISÍVEL (EXEMPLO)]\n${pageContext.visibleText.substring(0, 1500)}`;
+      }
     }
 
     // Inject visual audit data if available
@@ -110,32 +175,67 @@ Ações suportadas:
 
 Seja preciso nas instruções de automação para garantir que os botões corretos do Instagram sejam clicados.`;
 
+    const chkGroupDebate = document.getElementById("chk-group-debate");
+    const isGroupDebateMode = chkGroupDebate && chkGroupDebate.checked;
+
+    const agentsToRun = isGroupDebateMode ? [
+      { id: "groq", name: "Gregório (Programador)", initials: "DV", bgClass: "success-bg", model: "llama-3.3-70b-versatile", persona: "Você é o Programador (Dev) do grupo. Analise a tecnologia do site, frameworks, integrações de APIs, banco de dados e sugira melhorias no código." },
+      { id: "claude", name: "Clara (Designer)", initials: "DS", bgClass: "info-bg", model: "claude-sonnet-4-20250514", persona: "Você é a Designer (UI/UX) do grupo. Avalie a usabilidade, branding, design visual, layout e clareza das CTAs na tela." },
+      { id: "openai", name: "Olavo (Marketing)", initials: "MK", bgClass: "warning-bg", model: "gpt-4o-mini", persona: "Você é o especialista de Marketing e Copywriter do grupo. Avalie e otimize a copy, títulos, proposta de valor e conversão." },
+      { id: "huggingface", name: "Hugo (Analista)", initials: "AN", bgClass: "purple-bg", model: "Qwen/Qwen2.5-72B-Instruct", persona: "Você é o Analista de Negócios e QA. Aponte falhas operacionais, furos nas regras de negócio, riscos e vulnerabilidades." },
+      { id: "gemini", name: "Gael (Assistente Principal)", initials: "AP", bgClass: "info-bg", model: "gemini-2.5-flash", persona: "Você é o Assistente Principal do grupo. Leia as respostas de todos os especialistas anteriores, crie uma síntese coerente e entregue o plano de ação final detalhado em Markdown." }
+    ] : selectedAgents.map(id => ({
+      id: id,
+      name: PROVIDERS[id] ? PROVIDERS[id].name : id,
+      initials: PROVIDERS[id] ? PROVIDERS[id].initials : id.substring(0, 2).toUpperCase(),
+      bgClass: PROVIDERS[id] ? PROVIDERS[id].bgClass : "neutral-bg",
+      model: PROVIDERS[id] ? PROVIDERS[id].model : "gemini-2.5-flash",
+      persona: ""
+    }));
+
     let contextMessages = [{ role: "system", content: systemPrompt }];
     
-    for (let i = 0; i < selectedAgents.length; i++) {
-      const agentId = selectedAgents[i];
-      const agent = PROVIDERS[agentId];
+    for (let i = 0; i < agentsToRun.length; i++) {
+      const agent = agentsToRun[i];
+      const agentId = agent.id;
       
       let userPrompt = message;
-      if (i > 0) {
-        let lastSuccessfulResponse = null;
-        let lastAgentName = "";
-        for (let j = contextMessages.length - 1; j >= 0; j--) {
-          if (contextMessages[j].role === "assistant" && !contextMessages[j].failed) {
-            lastSuccessfulResponse = contextMessages[j].content;
-            lastAgentName = contextMessages[j].agentName || "agente anterior";
-            break;
+      let agentSystemPrompt = systemPrompt;
+      
+      if (isGroupDebateMode) {
+        agentSystemPrompt = `${systemPrompt}\n\n[DIRETRIZ DE ESPECIALISTA]\n${agent.persona}\nLembre-se: aja exatamente como esse papel.`;
+        
+        if (i > 0) {
+          let debHistory = "\n\n[DEBATE ATÉ O MOMENTO]\n";
+          for (let j = 0; j < i; j++) {
+            const prevAgent = agentsToRun[j];
+            const prevResponse = contextMessages.find(m => m.agentName === prevAgent.name && !m.failed)?.content || "";
+            if (prevResponse) {
+              debHistory += `--- Especialista ${prevAgent.name} respondeu: ---\n${prevResponse}\n\n`;
+            }
           }
+          userPrompt = `Minha dúvida inicial foi: "${message}".\n${debHistory}\nAgora debata e contribua do ponto de vista de sua especialidade. Aponte concordâncias, discorde de forma construtiva e proponha melhorias concretas.`;
         }
-        if (lastSuccessfulResponse) {
-          userPrompt = `Minha dúvida inicial foi: "${message}".\nO agente ${lastAgentName} respondeu:\n"${lastSuccessfulResponse}"\n\nAgora debata a ideia dele, aponte melhorias e dê sua resposta complementar.`;
-        } else {
-          userPrompt = message;
+      } else {
+        if (i > 0) {
+          let lastSuccessfulResponse = null;
+          let lastAgentName = "";
+          for (let j = contextMessages.length - 1; j >= 0; j--) {
+            if (contextMessages[j].role === "assistant" && !contextMessages[j].failed) {
+              lastSuccessfulResponse = contextMessages[j].content;
+              lastAgentName = contextMessages[j].agentName || "agente anterior";
+              break;
+            }
+          }
+          if (lastSuccessfulResponse) {
+            userPrompt = `Minha dúvida inicial foi: "${message}".\nO agente ${lastAgentName} respondeu:\n"${lastSuccessfulResponse}"\n\nAgora debata a ideia dele, aponte melhorias e dê sua resposta complementar.`;
+          }
         }
       }
 
       const currentMessages = [
-        ...contextMessages.filter(m => !m.failed).map(m => ({ role: m.role, content: m.content })),
+        { role: "system", content: agentSystemPrompt },
+        ...contextMessages.filter(m => m.role !== "system" && !m.failed).map(m => ({ role: m.role, content: m.content })),
         { role: "user", content: userPrompt }
       ];
 
@@ -185,7 +285,7 @@ Seja preciso nas instruções de automação para garantir que os botões corret
         `;
       }
       
-      if (i < selectedAgents.length - 1) {
+      if (i < agentsToRun.length - 1) {
         chatMessagesDiv.innerHTML += `
           <div class="loader-container" id="${loaderId}" style="padding: 10px; align-self: flex-start; background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); max-width: 80px; margin-bottom: 8px;">
             <div class="dots-loader" style="margin-bottom:0;">

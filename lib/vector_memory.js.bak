@@ -1,0 +1,169 @@
+/**
+   * Motor leve de busca semântica local baseada em TF-IDF (Term Frequency-Inverse Document Frequency)
+   * e similaridade de cosseno.
+   */
+
+// Stop words básicas de português para filtragem de ruído
+const STOP_WORDS = new Set([
+  'o', 'a', 'os', 'as', 'um', 'uma', 'uns', 'umas',
+  'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'nos', 'nas',
+  'e', 'ou', 'mas', 'se', 'para', 'com', 'por', 'que', 'como',
+  'eu', 'voce', 'ele', 'ela', 'nos', 'eles', 'elas',
+  'e', 'o', 'do', 'da', 'em', 'para', 'com'
+]);
+
+/**
+ * Normaliza e tokeniza um texto.
+ * @param {string} text 
+ * @returns {string[]}
+ */
+function tokenize(text) {
+  if (!text) return [];
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/[^a-z0-9\s-]/g, '') // Apenas letras, números e espaços
+    .split(/\s+/)
+    .filter(word => word.length > 1 && !STOP_WORDS.has(word));
+}
+
+/**
+ * Calcula a frequência dos termos (TF) para um documento.
+ * @param {string[]} tokens 
+ * @returns {Map<string, number>}
+ */
+function getTermFrequency(tokens) {
+  const tf = new Map();
+  tokens.forEach(token => {
+    tf.set(token, (tf.get(token) || 0) + 1);
+  });
+  // Normaliza pelo número total de termos
+  for (const [term, count] of tf.entries()) {
+    tf.set(term, count / tokens.length);
+  }
+  return tf;
+}
+
+/**
+ * Calcula a similaridade de cosseno entre dois mapas de pesos.
+ * @param {Map<string, number>} vecA 
+ * @param {Map<string, number>} vecB 
+ * @returns {number}
+ */
+function cosineSimilarity(vecA, vecB) {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (const [term, valA] of vecA.entries()) {
+    normA += valA * valA;
+    if (vecB.has(term)) {
+      dotProduct += valA * vecB.get(term);
+    }
+  }
+
+  for (const valB of vecB.values()) {
+    normB += valB * valB;
+  }
+
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+class VectorMemory {
+  constructor() {
+    this.documents = []; // array de { id, text, metadata, tfMap }
+    this.df = new Map(); // Document Frequency dos termos
+  }
+
+  /**
+   * Limpa todos os documentos da memória indexada.
+   */
+  clear() {
+    this.documents = [];
+    this.df.clear();
+  }
+
+  /**
+   * Adiciona um documento para o indexador.
+   * @param {string|number} id - Identificador único
+   * @param {string} text - Conteúdo de texto
+   * @param {object} [metadata] - Dados adicionais
+   */
+  addDocument(id, text, metadata = {}) {
+    const tokens = tokenize(text);
+    if (tokens.length === 0) return;
+
+    const tfMap = getTermFrequency(tokens);
+    
+    // Atualiza Document Frequency (DF)
+    const uniqueTokens = new Set(tokens);
+    uniqueTokens.forEach(token => {
+      this.df.set(token, (this.df.get(token) || 0) + 1);
+    });
+
+    this.documents.push({
+      id,
+      text,
+      metadata,
+      tfMap,
+      tokens
+    });
+  }
+
+  /**
+   * Executa busca semântica em relação a uma consulta de busca.
+   * @param {string} query - Consulta textual
+   * @param {number} limit - Máximo de resultados retornados (padrão 3)
+   * @returns {Array<{id, text, metadata, score}>}
+   */
+  search(query, limit = 3) {
+    const queryTokens = tokenize(query);
+    if (queryTokens.length === 0 || this.documents.length === 0) {
+      return [];
+    }
+
+    const queryTf = getTermFrequency(queryTokens);
+    const numDocs = this.documents.length;
+
+    // Calcula pesos TF-IDF para a query e para os documentos
+    const results = this.documents.map(doc => {
+      const queryWeights = new Map();
+      const docWeights = new Map();
+
+      // União de tokens na query e no documento
+      const termUnion = new Set([...queryTokens, ...doc.tokens]);
+
+      termUnion.forEach(term => {
+        // Calcula IDF: log(N / DF)
+        const docFreq = this.df.get(term) || 0;
+        const idf = docFreq > 0 ? Math.log(numDocs / docFreq) + 1 : 1;
+
+        if (queryTf.has(term)) {
+          queryWeights.set(term, queryTf.get(term) * idf);
+        }
+        if (doc.tfMap.has(term)) {
+          docWeights.set(term, doc.tfMap.get(term) * idf);
+        }
+      });
+
+      const score = cosineSimilarity(queryWeights, docWeights);
+
+      return {
+        id: doc.id,
+        text: doc.text,
+        metadata: doc.metadata,
+        score
+      };
+    });
+
+    // Filtra scores maiores que zero e ordena decrescente
+    return results
+      .filter(r => r.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+  }
+}
+
+module.exports = VectorMemory;

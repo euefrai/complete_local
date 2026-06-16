@@ -3,6 +3,9 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const { verifyToken } = require('../lib/auth');
+const { detectPromptInjection } = require('../lib/validators');
+const memoryManager = require('../lib/memory/index');
+const { asyncHandler } = require('../lib/self_healing');
 
 const DATA_DIR = path.resolve(__dirname, '../data');
 const MEMORY_FILE = path.join(DATA_DIR, 'db_social_memory.json');
@@ -90,9 +93,17 @@ router.post('/api/social/memory', verifyToken, (req, res) => {
 });
 
 // 2. Social Media Manager Agent: Planejamento
-router.post('/api/social/agent/manage', verifyToken, async (req, res) => {
+router.post('/api/social/agent/manage', verifyToken, asyncHandler(async (req, res) => {
   const { type } = req.body || {}; // weekly or monthly
+  
+  const guard = detectPromptInjection(type);
+  if (!guard.safe) {
+    return res.status(400).json({ error: guard.reason });
+  }
+
   const memory = loadSocialMemory();
+  const semanticResults = memoryManager.searchSemantic(`Planejamento de conteúdo ${type || 'semanal'}`, 3);
+  const semanticContext = semanticResults.map(r => r.text).join('\n');
   
   const systemPrompt = `Você é o Diretor de Marketing Digital, Estrategista de Conteúdo e Gestor de Redes Sociais do VEXX OS.
 Seu objetivo é planejar estratégias de crescimento e calendários de publicações para o Instagram.
@@ -100,12 +111,15 @@ Considere as preferências do nicho e estilo do usuário:
 - Nicho: ${memory.niche}
 - Público: ${memory.audience}
 - Estilo: ${memory.writing_style}
-- Aprendizados anteriores: ${memory.past_learnings.join(' | ')}`;
+- Aprendizados anteriores: ${memory.past_learnings.join(' | ')}
+
+Contexto Semântico de Memorias Relacionadas:
+${semanticContext}`;
 
   const userPrompt = `Gere um planejamento de conteúdo do tipo "${type || 'semanal'}" para o Instagram.
 Inclua:
 1. Um calendário de postagens (indicando dia, formato - Reels/Stories/Carrossel, e tema).
-2. Uma tática de crescimento viral para esta semana baseada no nicho.
+2. Um tática de crescimento viral para esta semana baseada no nicho.
 3. Sugestões de hashtags e CTA recomendados para as postagens.`;
 
   const messages = [
@@ -115,17 +129,28 @@ Inclua:
 
   const result = await callLocalChat(messages);
   res.json({ success: true, output: result });
-});
+}));
 
 // 3. Content Creator Agent: Criação de Post
-router.post('/api/social/agent/create', verifyToken, async (req, res) => {
+router.post('/api/social/agent/create', verifyToken, asyncHandler(async (req, res) => {
   const { format, theme } = req.body || {};
+  
+  const guardFormat = detectPromptInjection(format);
+  const guardTheme = detectPromptInjection(theme);
+  if (!guardFormat.safe) return res.status(400).json({ error: guardFormat.reason });
+  if (!guardTheme.safe) return res.status(400).json({ error: guardTheme.reason });
+
   const memory = loadSocialMemory();
+  const semanticResults = memoryManager.searchSemantic(theme || 'Criação de post', 3);
+  const semanticContext = semanticResults.map(r => r.text).join('\n');
 
   const systemPrompt = `Você é o Content Creator do VEXX OS, especialista em criação de Reels, Stories e Carrosséis.
 Crie um conteúdo alinhado ao nicho e estilo:
 - Nicho: ${memory.niche}
-- Estilo: ${memory.writing_style}`;
+- Estilo: ${memory.writing_style}
+
+Contexto Semântico de Memorias Relacionadas:
+${semanticContext}`;
 
   const userPrompt = `Gere um roteiro completo de publicação.
 Formato: ${format || 'Reels'}
@@ -144,14 +169,17 @@ Retorne:
 
   const result = await callLocalChat(messages);
   res.json({ success: true, output: result });
-});
+}));
 
 // 4. Viral Analyzer Agent: Pontuação 0-100
-router.post('/api/social/viral-analyzer', verifyToken, async (req, res) => {
+router.post('/api/social/viral-analyzer', verifyToken, asyncHandler(async (req, res) => {
   const { content } = req.body || {};
   if (!content) {
     return res.status(400).json({ error: 'O parâmetro content é obrigatório.' });
   }
+
+  const guard = detectPromptInjection(content);
+  if (!guard.safe) return res.status(400).json({ error: guard.reason });
 
   const memory = loadSocialMemory();
 
@@ -211,10 +239,10 @@ Retorne EXATAMENTE no formato JSON:
       }
     });
   }
-});
+}));
 
 // 5. Trend Engine Agent
-router.get('/api/social/trends', verifyToken, async (req, res) => {
+router.get('/api/social/trends', verifyToken, asyncHandler(async (req, res) => {
   const memory = loadSocialMemory();
 
   const systemPrompt = `Você é o Trend Analyzer do VEXX OS.
@@ -223,7 +251,7 @@ Foque no nicho: ${memory.niche}.`;
 
   const userPrompt = `Retorne:
 1. 3 Temas/Tópicos virais de tecnologia/IA que estão em alta nas últimas 24 horas.
-2. 3 Sugestões de estilos de áudio (tipo de música ou batida) recomendadas para posts premium de tecnologia.
+2. 3 Sugestões de styles de áudio (tipo de música ou batida) recomendadas para posts premium de tecnologia.
 3. 10 hashtags virais recomendadas para o nicho.
 4. 3 ideias rápidas de posts baseados nos concorrentes: ${memory.competitors.join(', ')}.`;
 
@@ -234,11 +262,15 @@ Foque no nicho: ${memory.niche}.`;
 
   const result = await callLocalChat(messages);
   res.json({ success: true, output: result });
-});
+}));
 
 // 6. Post Optimizer Agent (Legenda e Horários)
-router.post('/api/social/post-optimizer', verifyToken, async (req, res) => {
+router.post('/api/social/post-optimizer', verifyToken, asyncHandler(async (req, res) => {
   const { caption } = req.body || {};
+  
+  const guard = detectPromptInjection(caption);
+  if (!guard.safe) return res.status(400).json({ error: guard.reason });
+
   const memory = loadSocialMemory();
 
   const systemPrompt = `Você é o Post Optimizer do VEXX OS.
@@ -261,17 +293,30 @@ Retorne:
 
   const result = await callLocalChat(messages);
   res.json({ success: true, output: result });
-});
+}));
 
 // 7. Auto Reply Agent: Comentários/DMs
-router.post('/api/social/agent/reply', verifyToken, async (req, res) => {
+router.post('/api/social/agent/reply', verifyToken, asyncHandler(async (req, res) => {
   const { type, contactUsername, text, postCaption } = req.body || {};
+  
+  const guardType = detectPromptInjection(type);
+  const guardUser = detectPromptInjection(contactUsername);
+  const guardText = detectPromptInjection(text);
+  if (!guardType.safe || !guardUser.safe || !guardText.safe) {
+    return res.status(400).json({ error: 'Filtro de segurança ativado contra Prompt Injection.' });
+  }
+
   const memory = loadSocialMemory();
+  const semanticResults = memoryManager.searchSemantic(text || 'Mensagem recebida', 3);
+  const semanticContext = semanticResults.map(r => r.text).join('\n');
 
   const systemPrompt = `Você é o Auto Reply Agent do VEXX OS.
 Gere uma resposta ideal, fluida e natural (em português brasileiro) para um contato.
 Nicho da Conta: ${memory.niche}
-Estilo de Conversação: ${memory.writing_style}`;
+Estilo de Conversação: ${memory.writing_style}
+
+Contexto Semântico de Interações e Históricos:
+${semanticContext}`;
 
   const userPrompt = `Tipo de entrada: ${type || 'comentário'}
 Remetente: @${contactUsername || 'usuario'}
@@ -286,11 +331,17 @@ Elabore uma resposta curta, inteligente e humanizada.`;
   ];
 
   const result = await callLocalChat(messages);
+  
+  // Salva no banco de interações da memória de 3 camadas
+  if (contactUsername && text && result && !result.includes('[Erro na IA]')) {
+    memoryManager.recordInteraction(contactUsername, text, result);
+  }
+
   res.json({ success: true, output: result });
-});
+}));
 
 // 8. Self Improvement Loop
-router.post('/api/social/self-improvement', verifyToken, async (req, res) => {
+router.post('/api/social/self-improvement', verifyToken, asyncHandler(async (req, res) => {
   const memory = loadSocialMemory();
   
   // Load actual posts database to see performance
@@ -352,6 +403,9 @@ Retorne de forma estruturada.`;
     const topLearnings = extractedLearnings.slice(0, 2);
     memory.past_learnings = [...new Set([...memory.past_learnings, ...topLearnings])].slice(-10); // keep last 10 max
     saveSocialMemory(memory);
+    
+    // Registra o aprendizado na memória de três camadas também!
+    topLearnings.forEach(l => memoryManager.addLearning(l));
   }
 
   res.json({
@@ -359,6 +413,6 @@ Retorne de forma estruturada.`;
     analysis: result,
     addedLearnings: extractedLearnings.slice(0, 2)
   });
-});
+}));
 
 module.exports = router;

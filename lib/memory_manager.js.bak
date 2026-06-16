@@ -1,0 +1,214 @@
+const fs = require('fs');
+const path = require('path');
+const VectorMemory = require('./vector_memory');
+const { logInfo, logError } = require('./observability');
+
+const DATA_DIR = path.resolve(__dirname, '../data');
+const LONG_TERM_FILE = path.join(DATA_DIR, 'db_long_term_memory.json');
+
+// Inicializa o motor vetorial local
+const vectorIndex = new VectorMemory();
+
+// Camada 1: Short-term cache em memória RAM
+const shortTermCache = new Map();
+
+/**
+ * Garante que o diretório data exista.
+ */
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+/**
+ * Inicializa a memória carregando os dados do arquivo de longo prazo.
+ */
+function initialize() {
+  try {
+    const memory = loadLongTermRaw();
+    vectorIndex.clear();
+
+    // Indexa os perfis e aprendizados passados para busca semântica
+    if (memory.profiles) {
+      Object.entries(memory.profiles).forEach(([username, p]) => {
+        const docText = `Perfil de @${username}. Nome: ${p.name || ''}. Bio: ${p.biography || ''}. Seguidores: ${p.followers_count || 0}. Engajamento: ${p.engagement || ''}. Sentimento: ${p.sentiment || ''}.`;
+        vectorIndex.addDocument(`profile_${username}`, docText, { type: 'profile', username });
+      });
+    }
+
+    if (memory.past_learnings) {
+      memory.past_learnings.forEach((learning, index) => {
+        vectorIndex.addDocument(`learning_${index}`, learning, { type: 'learning', index });
+      });
+    }
+
+    if (memory.interactions) {
+      memory.interactions.forEach((inter, index) => {
+        const docText = `Interação com @${inter.contactUsername || 'usuario'}: "${inter.text || ''}". Resposta: "${inter.reply || ''}"`;
+        vectorIndex.addDocument(`interaction_${index}`, docText, { type: 'interaction', index, data: inter });
+      });
+    }
+
+    logInfo('[Memory Manager] Inicializado e indexado com sucesso.');
+  } catch (err) {
+    logError('[Memory Manager] Falha na inicialização', err);
+  }
+}
+
+/**
+ * Carrega a memória de longo prazo bruta de forma segura.
+ * @returns {object}
+ */
+function loadLongTermRaw() {
+  if (!fs.existsSync(LONG_TERM_FILE)) {
+    const defaultStructure = {
+      preferences: {
+        niche: "IA e Produtividade",
+        style: "Profissional e Objetivo"
+      },
+      profiles: {},
+      past_learnings: [],
+      interactions: []
+    };
+    saveLongTermRaw(defaultStructure);
+    return defaultStructure;
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(LONG_TERM_FILE, 'utf8'));
+  } catch (err) {
+    logError('[Memory Manager] Erro ao analisar JSON de longo prazo. Reiniciando estrutura padrão.', err);
+    return { preferences: {}, profiles: {}, past_learnings: [], interactions: [] };
+  }
+}
+
+/**
+ * Grava a memória de longo prazo de forma síncrona e segura.
+ * @param {object} data 
+ */
+function saveLongTermRaw(data) {
+  try {
+    fs.writeFileSync(LONG_TERM_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    logError('[Memory Manager] Falha ao escrever arquivo de longo prazo', err);
+  }
+}
+
+/**
+ * Salva uma informação na memória de curto prazo (RAM).
+ */
+function setShortTerm(key, val) {
+  shortTermCache.set(key, val);
+}
+
+/**
+ * Recupera da memória de curto prazo.
+ */
+function getShortTerm(key) {
+  return shortTermCache.get(key);
+}
+
+/**
+ * Salva um perfil de usuário e o indexa para pesquisa semântica.
+ */
+function saveProfile(username, profileData) {
+  const memory = loadLongTermRaw();
+  memory.profiles[username] = {
+    ...memory.profiles[username],
+    ...profileData,
+    updatedAt: new Date().toISOString()
+  };
+  saveLongTermRaw(memory);
+
+  // Recarrega no indexador de vetor
+  const docText = `Perfil de @${username}. Nome: ${profileData.name || ''}. Bio: ${profileData.biography || ''}. Seguidores: ${profileData.followers_count || 0}.`;
+  vectorIndex.addDocument(`profile_${username}`, docText, { type: 'profile', username });
+  logInfo(`[Memory Manager] Perfil de @${username} salvo e indexado semântico.`);
+}
+
+/**
+ * Registra uma nova interação no banco de longo prazo e vetoriza.
+ */
+function recordInteraction(contactUsername, text, reply) {
+  const memory = loadLongTermRaw();
+  const interactionEntry = {
+    contactUsername,
+    text,
+    reply,
+    timestamp: new Date().toISOString()
+  };
+
+  memory.interactions.push(interactionEntry);
+  saveLongTermRaw(memory);
+
+  // Indexa semanticamente
+  const docText = `Interação com @${contactUsername}: "${text}". Resposta: "${reply}"`;
+  const idx = memory.interactions.length - 1;
+  vectorIndex.addDocument(`interaction_${idx}`, docText, { type: 'interaction', index: idx, data: interactionEntry });
+}
+
+/**
+ * Adiciona um aprendizado geral.
+ */
+function addLearning(learningText) {
+  const memory = loadLongTermRaw();
+  if (!memory.past_learnings.includes(learningText)) {
+    memory.past_learnings.push(learningText);
+    saveLongTermRaw(memory);
+    
+    const idx = memory.past_learnings.length - 1;
+    vectorIndex.addDocument(`learning_${idx}`, learningText, { type: 'learning', index: idx });
+  }
+}
+
+/**
+ * Pesquisa semântica usando o motor local TF-IDF.
+ */
+function searchSemantic(query, limit = 3) {
+  return vectorIndex.search(query, limit);
+}
+
+/**
+ * Reduz e otimiza o uso de espaço da memória de longo prazo (Compressão).
+ * Remove interações redundantes ou antigas se passar de um certo limite.
+ */
+function compressMemory() {
+  const memory = loadLongTermRaw();
+  
+  let compressedCount = 0;
+  if (memory.interactions && memory.interactions.length > 50) {
+    // Mantém as 20 mais recentes e condensa o resto
+    const oldInteractions = memory.interactions.slice(0, -20);
+    const newInteractions = memory.interactions.slice(-20);
+    
+    // Resume em tópicos ou simplesmente remove duplicidades
+    const uniqueOld = [];
+    const seenUsers = new Set();
+    
+    for (let i = oldInteractions.length - 1; i >= 0; i--) {
+      const item = oldInteractions[i];
+      if (!seenUsers.has(item.contactUsername)) {
+        seenUsers.add(item.contactUsername);
+        uniqueOld.unshift(item);
+      } else {
+        compressedCount++;
+      }
+    }
+    
+    memory.interactions = [...uniqueOld, ...newInteractions];
+    saveLongTermRaw(memory);
+    initialize(); // Re-indexa o vetor
+    logInfo(`[Memory Manager] Compressão efetuada. Removidas ${compressedCount} interações redundantes.`);
+  }
+}
+
+module.exports = {
+  initialize,
+  setShortTerm,
+  getShortTerm,
+  saveProfile,
+  recordInteraction,
+  addLearning,
+  searchSemantic,
+  compressMemory,
+  loadLongTermRaw
+};
